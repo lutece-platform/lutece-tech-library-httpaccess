@@ -18,11 +18,6 @@
 			<version>[2.2.6,3.0-SNAPSHOT)</version>
 			<type>lutece-core</type>
 		</dependency>
-		<dependency>
-			<groupId>commons-httpclient</groupId>
-			<artifactId>commons-httpclient</artifactId>
-			<version>3.0.1</version>
-		</dependency>
 	</dependencies>
     <scm>
         <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/library/library-httpaccess</connection>
