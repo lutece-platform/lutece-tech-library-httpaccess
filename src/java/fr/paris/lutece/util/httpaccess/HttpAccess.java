@@ -33,23 +33,22 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import fr.paris.lutece.portal.service.util.AppLogService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.NTCredentials;
+import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.methods.GetMethod;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import java.net.HttpURLConnection;
+import fr.paris.lutece.portal.service.util.AppLogService;
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
 
 /**
@@ -65,6 +64,8 @@ public class HttpAccess
     private static final String PROPERTY_HOST_NAME = "httpAccess.hostName";
     private static final String PROPERTY_DOMAIN_NAME = "httpAccess.domainName";
     private static final String PROPERTY_REALM = "httpAccess.realm";
+    private static final String PROPERTY_NO_PROXY_FOR = "httpAccess.noProxyFor";
+    private static final String SEPARATOR = ",";
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -217,6 +218,8 @@ public class HttpAccess
         String strHostName = AppPropertiesService.getProperty( PROPERTY_HOST_NAME );
         String strDomainName = AppPropertiesService.getProperty( PROPERTY_DOMAIN_NAME );
         String strRealm = AppPropertiesService.getProperty( PROPERTY_REALM );
+        String strNoProxyFor = AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR );
+        boolean bNoProxy = false;
 
         // Create an instance of HttpClient.
         HttpClient client = new HttpClient(  );
@@ -225,7 +228,20 @@ public class HttpAccess
         if ( ( strProxyHost != null ) && ( !strProxyHost.equals( "" ) ) && ( strProxyPort != null ) &&
                 ( !strProxyPort.equals( "" ) ) )
         {
-            client.getHostConfiguration(  ).setProxy( strProxyHost, Integer.parseInt( strProxyPort ) );
+            try
+            {
+                bNoProxy = ( ( strNoProxyFor != null ) && !strNoProxyFor.equals( "" ) ) &&
+                    matchesList( strNoProxyFor.split( SEPARATOR ), method.getURI(  ).getHost(  ) );
+            }
+            catch ( URIException e )
+            {
+                AppLogService.error( e.getMessage(  ), e );
+            }
+
+            if ( !bNoProxy )
+            {
+                client.getHostConfiguration(  ).setProxy( strProxyHost, Integer.parseInt( strProxyPort ) );
+            }
         }
 
         Credentials cred = null;
@@ -241,7 +257,7 @@ public class HttpAccess
             cred = new UsernamePasswordCredentials( strProxyUserName, strProxyPassword );
         }
 
-        if ( cred != null )
+        if ( ( cred != null ) && !bNoProxy )
         {
             client.getState(  ).setProxyCredentials( strRealm, strProxyHost, cred );
             client.getState(  ).setAuthenticationPreemptive( true );
@@ -249,5 +265,77 @@ public class HttpAccess
         }
 
         return client;
+    }
+
+    //application du pattern matcher sur la base d un seul texte et d'une liste de patterns
+    private boolean matchesList( String[] patterns, String text )
+    {
+        if ( patterns == null )
+        {
+            return false;
+        }
+
+        for ( String pattern : patterns )
+        {
+            if ( matches( pattern, text ) )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    //algorithme de verification base sur les caracteres * et ?
+    private static boolean matches( String pattern, String text )
+    {
+        text += '\0';
+        pattern += '\0';
+
+        int N = pattern.length(  );
+
+        boolean[] states = new boolean[N + 1];
+        boolean[] old = new boolean[N + 1];
+        old[0] = true;
+
+        for ( int i = 0; i < text.length(  ); i++ )
+        {
+            char c = text.charAt( i );
+            states = new boolean[N + 1];
+
+            for ( int j = 0; j < N; j++ )
+            {
+                char p = pattern.charAt( j );
+
+                if ( old[j] && ( p == '*' ) )
+                {
+                    old[j + 1] = true;
+                }
+
+                if ( old[j] && ( p == c ) )
+                {
+                    states[j + 1] = true;
+                }
+
+                if ( old[j] && ( p == '?' ) )
+                {
+                    states[j + 1] = true;
+                }
+
+                if ( old[j] && ( p == '*' ) )
+                {
+                    states[j] = true;
+                }
+
+                if ( old[j] && ( p == '*' ) )
+                {
+                    states[j + 1] = true;
+                }
+            }
+
+            old = states;
+        }
+
+        return states[N];
     }
 }
