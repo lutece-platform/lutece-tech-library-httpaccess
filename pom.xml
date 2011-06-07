@@ -11,6 +11,17 @@
 	<version>2.2.8-SNAPSHOT</version>
 	<name>Library HttpAccess</name>
 	<description>Http client access library</description>
+	<repositories>
+        <repository>
+            <id>lutece</id>
+            <name>luteceRepository</name>
+            <url>http://dev.lutece.paris.fr/maven_repository</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+	
 	<dependencies>
 		<dependency>
 			<groupId>fr.paris.lutece</groupId>
