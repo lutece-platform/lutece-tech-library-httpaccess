@@ -33,11 +33,8 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.HttpURLConnection;
+import fr.paris.lutece.portal.service.util.AppLogService;
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
@@ -46,9 +43,20 @@ import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.NTCredentials;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
-import fr.paris.lutece.portal.service.util.AppLogService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.lang.StringUtils;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import java.net.HttpURLConnection;
+
+import java.util.Map;
+import java.util.Map.Entry;
 
 
 /**
@@ -75,7 +83,7 @@ public class HttpAccess
      */
     public String doGet( String strUrl ) throws HttpAccessException
     {
-        String strResponseBody = null;
+        String strResponseBody = StringUtils.EMPTY;
 
         try
         {
@@ -123,84 +131,130 @@ public class HttpAccess
     }
 
     /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPost( String strUrl, Map<String, String> params )
+        throws HttpAccessException
+    {
+        String strResponseBody = StringUtils.EMPTY;
+
+        PostMethod method = new PostMethod( strUrl );
+
+        for ( Entry<String, String> entry : params.entrySet(  ) )
+        {
+            method.addParameter( entry.getKey(  ), entry.getValue(  ) );
+        }
+
+        try
+        {
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
+
+            if ( nResponse != HttpURLConnection.HTTP_OK )
+            {
+                String strError = "HttpAccess - Error getting URL : " + strUrl + " - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
+            }
+
+            strResponseBody = method.getResponseBodyAsString(  );
+        }
+        catch ( HttpException e )
+        {
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Error downloading '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
+            // Release the connection.
+            method.releaseConnection(  );
+        }
+
+        return strResponseBody;
+    }
+
+    /**
      * Send a GET HTTP request to an Url and return the response content.
      * @param strUrl The Url to access
-     * @return The response content of the Get request to the given Url
+     * @param strFilePath the file path
      * @throws HttpAccessException if there is a problem to access to the given Url
      */
     public void downloadFile( String strUrl, String strFilePath )
         throws HttpAccessException
     {
+        HttpMethodBase method = new GetMethod( strUrl );
+        method.setFollowRedirects( true );
+
+        BufferedInputStream bis = null;
+        BufferedOutputStream bos = null;
+
         try
         {
-            HttpMethodBase method = new GetMethod( strUrl );
-            method.setFollowRedirects( true );
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
 
-            BufferedInputStream bis = null;
-            BufferedOutputStream bos = null;
+            if ( nResponse != HttpURLConnection.HTTP_OK )
+            {
+                String strError = "HttpAccess - Error downloading file - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
+            }
 
+            bis = new BufferedInputStream( method.getResponseBodyAsStream(  ) );
+
+            FileOutputStream fos = new FileOutputStream( strFilePath );
+            bos = new BufferedOutputStream( fos );
+
+            int bytes;
+
+            while ( ( bytes = bis.read(  ) ) > -1 )
+            {
+                bos.write( bytes );
+            }
+        }
+        catch ( HttpException e )
+        {
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Unable to connect to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
             try
             {
-                HttpClient client = getHttpClient( method );
-                int nResponse = client.executeMethod( method );
-
-                if ( nResponse != HttpURLConnection.HTTP_OK )
+                if ( bis != null )
                 {
-                    String strError = "HttpAccess - Error downloading file - return code : " + nResponse;
-                    throw new HttpAccessException( strError, null );
+                    bis.close(  );
                 }
 
-                bis = new BufferedInputStream( method.getResponseBodyAsStream(  ) );
-
-                FileOutputStream fos = new FileOutputStream( strFilePath );
-                bos = new BufferedOutputStream( fos );
-
-                int bytes;
-
-                while ( ( bytes = bis.read(  ) ) > -1 )
+                if ( bos != null )
                 {
-                    bos.write( bytes );
+                    bos.close(  );
                 }
-            }
-            catch ( HttpException e )
-            {
-                String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
-                AppLogService.error( strError + e.getMessage(  ), e );
-                throw new HttpAccessException( strError + e.getMessage(  ), e );
             }
             catch ( IOException e )
             {
-                String strError = "HttpAccess - Unable to connect to '" + strUrl + "' : ";
-                AppLogService.error( strError + e.getMessage(  ), e );
-                throw new HttpAccessException( strError + e.getMessage(  ), e );
+                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage(  ), e );
+                throw new HttpAccessException( e.getMessage(  ), e );
             }
-            finally
-            {
-                try
-                {
-                    if ( bis != null )
-                    {
-                        bis.close(  );
-                    }
 
-                    if ( bos != null )
-                    {
-                        bos.close(  );
-                    }
-                }
-                catch ( IOException e )
-                {
-                    AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage(  ), e );
-                }
-
-                // Release the connection.
-                method.releaseConnection(  );
-            }
-        }
-        catch ( Exception e )
-        {
-            AppLogService.error( e.getMessage(  ), e );
-            throw new HttpAccessException( e.getMessage(  ), e );
+            // Release the connection.
+            method.releaseConnection(  );
         }
     }
 
@@ -224,14 +278,14 @@ public class HttpAccess
         // Create an instance of HttpClient.
         HttpClient client = new HttpClient(  );
 
-        // if proxy host and port found, set the correponding elements
-        if ( ( strProxyHost != null ) && ( !strProxyHost.equals( "" ) ) && ( strProxyPort != null ) &&
-                ( !strProxyPort.equals( "" ) ) )
+        // If proxy host and port found, set the correponding elements
+        if ( StringUtils.isNotBlank( strProxyHost ) && StringUtils.isNotBlank( strProxyPort ) &&
+                StringUtils.isNumeric( strProxyPort ) )
         {
             try
             {
-                bNoProxy = ( ( strNoProxyFor != null ) && !strNoProxyFor.equals( "" ) ) &&
-                    matchesList( strNoProxyFor.split( SEPARATOR ), method.getURI(  ).getHost(  ) );
+                bNoProxy = ( StringUtils.isNotBlank( strNoProxyFor ) &&
+                    matchesList( strNoProxyFor.split( SEPARATOR ), method.getURI(  ).getHost(  ) ) );
             }
             catch ( URIException e )
             {
@@ -246,38 +300,44 @@ public class HttpAccess
 
         Credentials cred = null;
 
-        //  if hostname and domain name found, consider we are in NTLM authentication scheme
+        // If hostname and domain name found, consider we are in NTLM authentication scheme
         // else if only username and password found, use simple UsernamePasswordCredentials
-        if ( ( strHostName != null ) && ( strDomainName != null ) )
+        if ( StringUtils.isNotBlank( strHostName ) && StringUtils.isNotBlank( strDomainName ) )
         {
             cred = new NTCredentials( strProxyUserName, strProxyPassword, strHostName, strDomainName );
         }
-        else if ( ( strProxyUserName != null ) && ( strProxyPassword != null ) )
+        else if ( StringUtils.isNotBlank( strProxyUserName ) && StringUtils.isNotBlank( strProxyPassword ) )
         {
             cred = new UsernamePasswordCredentials( strProxyUserName, strProxyPassword );
         }
 
         if ( ( cred != null ) && !bNoProxy )
         {
-            client.getState(  ).setProxyCredentials( strRealm, strProxyHost, cred );
-            client.getState(  ).setAuthenticationPreemptive( true );
+            AuthScope authScope = new AuthScope( strProxyHost, Integer.parseInt( strProxyPort ), strRealm );
+            client.getState(  ).setProxyCredentials( authScope, cred );
+            client.getParams(  ).setAuthenticationPreemptive( true );
             method.setDoAuthentication( true );
         }
 
         return client;
     }
 
-    //application du pattern matcher sur la base d un seul texte et d'une liste de patterns
-    private boolean matchesList( String[] patterns, String text )
+    /**
+     * heck if the text matches one of the pattern of the list
+     * @param listPatterns the list of patterns
+     * @param strText the text
+     * @return true if the text matches one of the pattern, false otherwise
+     */
+    private boolean matchesList( String[] listPatterns, String strText )
     {
-        if ( patterns == null )
+        if ( listPatterns == null )
         {
             return false;
         }
 
-        for ( String pattern : patterns )
+        for ( String pattern : listPatterns )
         {
-            if ( matches( pattern, text ) )
+            if ( matches( pattern, strText ) )
             {
                 return true;
             }
@@ -286,26 +346,32 @@ public class HttpAccess
         return false;
     }
 
-    //algorithme de verification base sur les caracteres * et ?
-    private static boolean matches( String pattern, String text )
+    /**
+     * Check if the pattern match the text. It also deals with special characters
+     * like * or ?
+     * @param strPattern the pattern
+     * @param strText the text
+     * @return true if the text matches the pattern, false otherwise
+     */
+    private static boolean matches( String strPattern, String strText )
     {
-        text += '\0';
-        pattern += '\0';
+        String strTextTmp = strText + '\0';
+        String strPatternTmp = strPattern + '\0';
 
-        int N = pattern.length(  );
+        int nLength = strPatternTmp.length(  );
 
-        boolean[] states = new boolean[N + 1];
-        boolean[] old = new boolean[N + 1];
+        boolean[] states = new boolean[nLength + 1];
+        boolean[] old = new boolean[nLength + 1];
         old[0] = true;
 
-        for ( int i = 0; i < text.length(  ); i++ )
+        for ( int i = 0; i < strTextTmp.length(  ); i++ )
         {
-            char c = text.charAt( i );
-            states = new boolean[N + 1];
+            char c = strTextTmp.charAt( i );
+            states = new boolean[nLength + 1];
 
-            for ( int j = 0; j < N; j++ )
+            for ( int j = 0; j < nLength; j++ )
             {
-                char p = pattern.charAt( j );
+                char p = strPatternTmp.charAt( j );
 
                 if ( old[j] && ( p == '*' ) )
                 {
@@ -336,6 +402,6 @@ public class HttpAccess
             old = states;
         }
 
-        return states[N];
+        return states[nLength];
     }
 }
