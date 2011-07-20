@@ -35,6 +35,7 @@ package fr.paris.lutece.util.httpaccess;
 
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import fr.paris.lutece.util.http.RequestAuthenticator;
 
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
@@ -55,6 +56,7 @@ import java.io.IOException;
 
 import java.net.HttpURLConnection;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -83,12 +85,31 @@ public class HttpAccess
      */
     public String doGet( String strUrl ) throws HttpAccessException
     {
+        return doGet( strUrl, null, null );
+    }
+
+    /**
+     * Send a GET HTTP request to an Url and return the response content.
+     * @param strUrl The Url to access
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @return The response content of the Get request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doGet( String strUrl, RequestAuthenticator authenticator, List<String> listElements )
+        throws HttpAccessException
+    {
         String strResponseBody = StringUtils.EMPTY;
 
         try
         {
             HttpMethodBase method = new GetMethod( strUrl );
             method.setFollowRedirects( true );
+
+            if ( authenticator != null )
+            {
+                authenticator.authenticateRequest( method, listElements );
+            }
 
             try
             {
@@ -140,6 +161,21 @@ public class HttpAccess
     public String doPost( String strUrl, Map<String, String> params )
         throws HttpAccessException
     {
+        return doPost( strUrl, params, null, null );
+    }
+
+    /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPost( String strUrl, Map<String, String> params, RequestAuthenticator authenticator,
+        List<String> listElements ) throws HttpAccessException
+    {
         String strResponseBody = StringUtils.EMPTY;
 
         PostMethod method = new PostMethod( strUrl );
@@ -147,6 +183,11 @@ public class HttpAccess
         for ( Entry<String, String> entry : params.entrySet(  ) )
         {
             method.addParameter( entry.getKey(  ), entry.getValue(  ) );
+        }
+
+        if ( authenticator != null )
+        {
+            authenticator.authenticateRequest( method, listElements );
         }
 
         try
