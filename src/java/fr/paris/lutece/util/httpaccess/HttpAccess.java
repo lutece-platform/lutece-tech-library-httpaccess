@@ -35,7 +35,7 @@ package fr.paris.lutece.util.httpaccess;
 
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
-import fr.paris.lutece.util.http.RequestAuthenticator;
+import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;

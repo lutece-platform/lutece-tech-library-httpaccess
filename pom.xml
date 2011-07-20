@@ -1,16 +1,17 @@
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<artifactId>lutece-plugins-pom</artifactId>
-		<groupId>fr.paris.lutece.plugins</groupId>
-		<version>2.26</version>
-	</parent>
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>fr.paris.lutece.plugins</groupId>
-	<artifactId>library-httpaccess</artifactId>
-	<version>2.2.9-SNAPSHOT</version>
-	<name>Library HttpAccess</name>
-	<description>Http client access library</description>
-	<repositories>
+    <parent>
+        <artifactId>lutece-plugins-pom</artifactId>
+        <groupId>fr.paris.lutece.plugins</groupId>
+        <version>2.26</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>fr.paris.lutece.plugins</groupId>
+    <artifactId>library-httpaccess</artifactId>
+    <version>2.2.9-SNAPSHOT</version>
+    <name>Library HttpAccess</name>
+    <description>Http client access library</description>
+    <repositories>
         <repository>
             <id>lutece</id>
             <name>luteceRepository</name>
@@ -21,14 +22,21 @@
         </repository>
     </repositories>
 	
-	<dependencies>
-		<dependency>
-			<groupId>fr.paris.lutece</groupId>
-			<artifactId>lutece-core</artifactId>
-			<version>[2.2.6,4.0.0-SNAPSHOT)</version>
-			<type>lutece-core</type>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>fr.paris.lutece</groupId>
+            <artifactId>lutece-core</artifactId>
+            <version>[2.2.6,4.0.0-SNAPSHOT)</version>
+            <type>lutece-core</type>
+        </dependency>
+        <!-- signing request -->
+        <dependency>
+            <groupId>fr.paris.lutece.plugins</groupId>
+            <artifactId>library-signrequest</artifactId>
+            <version>[1.0.0-SNAPSHOT,)</version>
+            <type>lutece-plugin</type>
+        </dependency>
+    </dependencies>
     <scm>
         <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/library/library-httpaccess</connection>
         <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/library/library-httpaccess</developerConnection>
