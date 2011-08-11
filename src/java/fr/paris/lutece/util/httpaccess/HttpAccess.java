@@ -445,4 +445,84 @@ public class HttpAccess
 
         return states[nLength];
     }
+    
+        /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPostMultiValues( String strUrl, Map<String, List<String>> params )
+        throws HttpAccessException
+    {
+        return doPostMultiValues( strUrl, params, null, null );
+    }
+
+    /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPostMultiValues( String strUrl, Map<String, List<String>> params, RequestAuthenticator authenticator,
+        List<String> listElements ) throws HttpAccessException
+    {
+        String strResponseBody = StringUtils.EMPTY;
+
+        PostMethod method = new PostMethod( strUrl );
+
+        for ( Entry<String, List<String>> entry : params.entrySet(  ) )
+        {
+            String strParameter = entry.getKey(  );
+            List<String> values = entry.getValue();
+            for( String strValue : values )
+            {
+                method.addParameter( strParameter , strValue );
+            }
+        }
+
+        if ( authenticator != null )
+        {
+            authenticator.authenticateRequest( method, listElements );
+        }
+
+        try
+        {
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
+
+            if ( nResponse != HttpURLConnection.HTTP_OK )
+            {
+                String strError = "HttpAccess - Error getting URL : " + strUrl + " - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
+            }
+
+            strResponseBody = method.getResponseBodyAsString(  );
+        }
+        catch ( HttpException e )
+        {
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Error downloading '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
+            // Release the connection.
+            method.releaseConnection(  );
+        }
+
+        return strResponseBody;
+    }
+
+
 }
