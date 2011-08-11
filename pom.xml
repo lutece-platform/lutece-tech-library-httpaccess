@@ -45,6 +45,9 @@
             <type>jar</type>
         </dependency>
     </dependencies>
+	<properties>
+		<jiraProjectName>HTTPACCESS</jiraProjectName>
+	</properties>
     <scm>
         <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/library/library-httpaccess</connection>
         <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/library/library-httpaccess</developerConnection>
