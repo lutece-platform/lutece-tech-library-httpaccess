@@ -38,6 +38,7 @@ import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
 import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethodBase;
@@ -59,6 +60,8 @@ import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -76,6 +79,8 @@ public class HttpAccess
     private static final String PROPERTY_REALM = "httpAccess.realm";
     private static final String PROPERTY_NO_PROXY_FOR = "httpAccess.noProxyFor";
     private static final String SEPARATOR = ",";
+    private static final String PATTERN_FILENAME = ".*filename=\"([^\"]+)";
+    private static final String PROPERTY_HEADER_CONTENT_DISPOSITION = "Content-Disposition";
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -299,6 +304,75 @@ public class HttpAccess
         }
     }
 
+    /**
+     * Send a GET HTTP request to an Url and return the response content.
+     * @param strUrl The Url to access
+     * @param strDirectoryPath the directory path
+     * @return the file name
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String getFileName( String strUrl )
+        throws HttpAccessException
+    {
+    	
+    	String strFileName = null;
+        HttpMethodBase method = new GetMethod( strUrl );
+        method.setFollowRedirects( true );
+
+        try
+        {
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
+
+            if ( nResponse != HttpURLConnection.HTTP_OK )
+            {
+                String strError = "HttpAccess - Error downloading file - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
+            }
+
+            Header headerContentDisposition = method.getResponseHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
+                       
+            if ( headerContentDisposition != null )
+            {
+            	String headerValue = headerContentDisposition.getValue();
+            	Pattern p = Pattern.compile( PATTERN_FILENAME );
+            	Matcher matcher = p.matcher( headerValue );
+            	if ( matcher.matches(  ) )
+            	{
+            		strFileName = matcher.group( 1 );
+            	}
+            }
+            else
+            {
+            	String[] tab = strUrl.split("/");
+        		strFileName = tab[tab.length-1];
+            }
+            
+            method.abort(  );
+            
+        }
+        catch ( HttpException e )
+        {
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Unable to connect to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
+            // Release the connection.
+            method.releaseConnection(  );
+        }
+        
+        return strFileName;
+    }
+
+    
     /**
      * Create an HTTP client object using current configuration
      * @param method The method
