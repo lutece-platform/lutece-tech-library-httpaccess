@@ -37,6 +37,7 @@ import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
+import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -48,10 +49,15 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -230,6 +236,209 @@ public class HttpAccess
     }
 
     /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPostMultiValues( String strUrl, Map<String, List<String>> params )
+        throws HttpAccessException
+    {
+        return doPostMultiValues( strUrl, params, null, null );
+    }
+
+    /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPostMultiValues( String strUrl, Map<String, List<String>> params,
+        RequestAuthenticator authenticator, List<String> listElements )
+        throws HttpAccessException
+    {
+        String strResponseBody = StringUtils.EMPTY;
+        PostMethod method = new PostMethod( strUrl );
+
+        for ( Entry<String, List<String>> entry : params.entrySet(  ) )
+        {
+            String strParameter = entry.getKey(  );
+            List<String> values = entry.getValue(  );
+
+            for ( String strValue : values )
+            {
+                method.addParameter( strParameter, strValue );
+            }
+        }
+
+        if ( authenticator != null )
+        {
+            authenticator.authenticateRequest( method, listElements );
+        }
+
+        try
+        {
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
+
+            if ( nResponse != HttpURLConnection.HTTP_OK )
+            {
+                String strError = "HttpAccess - Error getting URL : " + strUrl + " - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
+            }
+
+            strResponseBody = method.getResponseBodyAsString(  );
+        }
+        catch ( HttpException e )
+        {
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Error downloading '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
+            // Release the connection.
+            method.releaseConnection(  );
+        }
+
+        return strResponseBody;
+    }
+
+    /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @param fileItems The list of file items
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, FileItem> fileItems )
+        throws HttpAccessException
+    {
+        return doPostMultiPart( strUrl, params, fileItems, null, null );
+    }
+
+    /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @param fileItems The list of file items
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, FileItem> fileItems,
+        RequestAuthenticator authenticator, List<String> listElements )
+        throws HttpAccessException
+    {
+        String strResponseBody = StringUtils.EMPTY;
+        PostMethod method = new PostMethod( strUrl );
+
+        if ( ( fileItems != null ) && !fileItems.isEmpty(  ) )
+        {
+            // Calculate the size
+            int nSizeParam = 0;
+
+            for ( Entry<String, List<String>> param : params.entrySet(  ) )
+            {
+                nSizeParam += param.getValue(  ).size(  );
+            }
+
+            int nSize = fileItems.size(  ) + nSizeParam;
+
+            // Part in which we store the parameters + files
+            Part[] parts = new Part[nSize];
+
+            int nIndex = 0;
+
+            // Store the Files
+            for ( Entry<String, FileItem> paramFileItem : fileItems.entrySet(  ) )
+            {
+                FileItem fileItem = paramFileItem.getValue(  );
+
+                if ( fileItem != null )
+                {
+                    File file = new File( fileItem.getName(  ) );
+
+                    try
+                    {
+                        fileItem.write( file );
+                        parts[nIndex] = new FilePart( paramFileItem.getKey(  ), file );
+                        nIndex++;
+                    }
+                    catch ( Exception e )
+                    {
+                        String strError = "HttpAccess - Error writing file '" + fileItem.getName(  ) + "' : ";
+                        AppLogService.error( strError + e.getMessage(  ), e );
+                        throw new HttpAccessException( strError + e.getMessage(  ), e );
+                    }
+                }
+            }
+
+            // Additionnal parameters
+            for ( Entry<String, List<String>> param : params.entrySet(  ) )
+            {
+                for ( String strValue : param.getValue(  ) )
+                {
+                    parts[nIndex] = new StringPart( param.getKey(  ), strValue );
+                    nIndex++;
+                }
+            }
+
+            method.setRequestEntity( new MultipartRequestEntity( parts, method.getParams(  ) ) );
+        }
+
+        if ( authenticator != null )
+        {
+            authenticator.authenticateRequest( method, listElements );
+        }
+
+        try
+        {
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
+
+            if ( nResponse != HttpURLConnection.HTTP_OK )
+            {
+                String strError = "HttpAccess - Error getting URL : " + strUrl + " - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
+            }
+
+            strResponseBody = method.getResponseBodyAsString(  );
+        }
+        catch ( HttpException e )
+        {
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Error downloading '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
+            // Release the connection.
+            method.releaseConnection(  );
+        }
+
+        return strResponseBody;
+    }
+
+    /**
      * Send a GET HTTP request to an Url and return the response content.
      * @param strUrl The Url to access
      * @param strFilePath the file path
@@ -307,15 +516,12 @@ public class HttpAccess
     /**
      * Send a GET HTTP request to an Url and return the response content.
      * @param strUrl The Url to access
-     * @param strDirectoryPath the directory path
      * @return the file name
      * @throws HttpAccessException if there is a problem to access to the given Url
      */
-    public String getFileName( String strUrl )
-        throws HttpAccessException
+    public String getFileName( String strUrl ) throws HttpAccessException
     {
-    	
-    	String strFileName = null;
+        String strFileName = null;
         HttpMethodBase method = new GetMethod( strUrl );
         method.setFollowRedirects( true );
 
@@ -331,25 +537,25 @@ public class HttpAccess
             }
 
             Header headerContentDisposition = method.getResponseHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
-                       
+
             if ( headerContentDisposition != null )
             {
-            	String headerValue = headerContentDisposition.getValue();
-            	Pattern p = Pattern.compile( PATTERN_FILENAME );
-            	Matcher matcher = p.matcher( headerValue );
-            	if ( matcher.matches(  ) )
-            	{
-            		strFileName = matcher.group( 1 );
-            	}
+                String headerValue = headerContentDisposition.getValue(  );
+                Pattern p = Pattern.compile( PATTERN_FILENAME );
+                Matcher matcher = p.matcher( headerValue );
+
+                if ( matcher.matches(  ) )
+                {
+                    strFileName = matcher.group( 1 );
+                }
             }
             else
             {
-            	String[] tab = strUrl.split("/");
-        		strFileName = tab[tab.length-1];
+                String[] tab = strUrl.split( "/" );
+                strFileName = tab[tab.length - 1];
             }
-            
+
             method.abort(  );
-            
         }
         catch ( HttpException e )
         {
@@ -368,11 +574,10 @@ public class HttpAccess
             // Release the connection.
             method.releaseConnection(  );
         }
-        
+
         return strFileName;
     }
 
-    
     /**
      * Create an HTTP client object using current configuration
      * @param method The method
@@ -519,84 +724,4 @@ public class HttpAccess
 
         return states[nLength];
     }
-    
-        /**
-     * Send a POST HTTP request to an url and return the response content
-     * @param strUrl the url to access
-     * @param params the list of parameters to post
-     * @return The response content of the Post request to the given Url
-     * @throws HttpAccessException if there is a problem to access to the given Url
-     */
-    public String doPostMultiValues( String strUrl, Map<String, List<String>> params )
-        throws HttpAccessException
-    {
-        return doPostMultiValues( strUrl, params, null, null );
-    }
-
-    /**
-     * Send a POST HTTP request to an url and return the response content
-     * @param strUrl the url to access
-     * @param params the list of parameters to post
-     * @param authenticator The {@link RequestAuthenticator}
-     * @param listElements to include in the signature
-     * @return The response content of the Post request to the given Url
-     * @throws HttpAccessException if there is a problem to access to the given Url
-     */
-    public String doPostMultiValues( String strUrl, Map<String, List<String>> params, RequestAuthenticator authenticator,
-        List<String> listElements ) throws HttpAccessException
-    {
-        String strResponseBody = StringUtils.EMPTY;
-
-        PostMethod method = new PostMethod( strUrl );
-
-        for ( Entry<String, List<String>> entry : params.entrySet(  ) )
-        {
-            String strParameter = entry.getKey(  );
-            List<String> values = entry.getValue();
-            for( String strValue : values )
-            {
-                method.addParameter( strParameter , strValue );
-            }
-        }
-
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
-
-        try
-        {
-            HttpClient client = getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-
-            if ( nResponse != HttpURLConnection.HTTP_OK )
-            {
-                String strError = "HttpAccess - Error getting URL : " + strUrl + " - return code : " + nResponse;
-                throw new HttpAccessException( strError, null );
-            }
-
-            strResponseBody = method.getResponseBodyAsString(  );
-        }
-        catch ( HttpException e )
-        {
-            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
-            AppLogService.error( strError + e.getMessage(  ), e );
-            throw new HttpAccessException( strError + e.getMessage(  ), e );
-        }
-        catch ( IOException e )
-        {
-            String strError = "HttpAccess - Error downloading '" + strUrl + "' : ";
-            AppLogService.error( strError + e.getMessage(  ), e );
-            throw new HttpAccessException( strError + e.getMessage(  ), e );
-        }
-        finally
-        {
-            // Release the connection.
-            method.releaseConnection(  );
-        }
-
-        return strResponseBody;
-    }
-
-
 }
