@@ -84,9 +84,11 @@ public class HttpAccess
     private static final String PROPERTY_DOMAIN_NAME = "httpAccess.domainName";
     private static final String PROPERTY_REALM = "httpAccess.realm";
     private static final String PROPERTY_NO_PROXY_FOR = "httpAccess.noProxyFor";
+    private static final String PROPERTY_CONTENT_CHARSET = "httpAccess.contentCharset";
+    private static final String PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET = "http.protocol.content-charset";
+    private static final String PROPERTY_HEADER_CONTENT_DISPOSITION = "Content-Disposition";
     private static final String SEPARATOR = ",";
     private static final String PATTERN_FILENAME = ".*filename=\"([^\"]+)";
-    private static final String PROPERTY_HEADER_CONTENT_DISPOSITION = "Content-Disposition";
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -593,6 +595,7 @@ public class HttpAccess
         String strDomainName = AppPropertiesService.getProperty( PROPERTY_DOMAIN_NAME );
         String strRealm = AppPropertiesService.getProperty( PROPERTY_REALM );
         String strNoProxyFor = AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR );
+        String strContentCharset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET );
         boolean bNoProxy = false;
 
         // Create an instance of HttpClient.
@@ -637,6 +640,11 @@ public class HttpAccess
             client.getState(  ).setProxyCredentials( authScope, cred );
             client.getParams(  ).setAuthenticationPreemptive( true );
             method.setDoAuthentication( true );
+        }
+
+        if ( StringUtils.isNotBlank( strContentCharset ) )
+        {
+            client.getParams(  ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, strContentCharset );
         }
 
         return client;
