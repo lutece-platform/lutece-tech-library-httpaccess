@@ -87,6 +87,7 @@ public class HttpAccess
     private static final String PROPERTY_CONTENT_CHARSET = "httpAccess.contentCharset";
     private static final String PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET = "http.protocol.content-charset";
     private static final String PROPERTY_HEADER_CONTENT_DISPOSITION = "Content-Disposition";
+    private static final String PROPERTY_HEADER_CONTENT_LENGTH = "Content-Length";
     private static final String SEPARATOR = ",";
     private static final String PATTERN_FILENAME = ".*filename=\"([^\"]+)";
 
@@ -578,6 +579,83 @@ public class HttpAccess
         }
 
         return strFileName;
+    }
+
+    /**
+     * Send a GET HTTP request to an Url and return the response content.
+     * @param strUrl The Url to access
+     * @return a {@link FileItem}
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public FileItem downloadFile( String strUrl ) throws HttpAccessException
+    {
+        HttpMethodBase method = new GetMethod( strUrl );
+        method.setFollowRedirects( true );
+
+        MemoryFileItem fileItem = null;
+
+        try
+        {
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
+
+            if ( nResponse != HttpURLConnection.HTTP_OK )
+            {
+                String strError = "HttpAccess - Error downloading file - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
+            }
+
+            // Get the file name
+            String strFileName = StringUtils.EMPTY;
+            Header headerContentDisposition = method.getResponseHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
+
+            if ( headerContentDisposition != null )
+            {
+                String headerValue = headerContentDisposition.getValue(  );
+                Pattern p = Pattern.compile( PATTERN_FILENAME );
+                Matcher matcher = p.matcher( headerValue );
+
+                if ( matcher.matches(  ) )
+                {
+                    strFileName = matcher.group( 1 );
+                }
+            }
+            else
+            {
+                String[] tab = strUrl.split( "/" );
+                strFileName = tab[tab.length - 1];
+            }
+
+            // Get the file size
+            long lSize = 0;
+            Header headerContentLength = method.getResponseHeader( PROPERTY_HEADER_CONTENT_LENGTH );
+
+            if ( headerContentLength != null )
+            {
+                lSize = Long.parseLong( headerContentLength.getValue(  ) );
+            }
+
+            fileItem = new MemoryFileItem( method.getResponseBody(  ), strFileName, lSize );
+        }
+        catch ( HttpException e )
+        {
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Unable to connect to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
+            // Release the connection.
+            method.releaseConnection(  );
+        }
+
+        return fileItem;
     }
 
     /**
