@@ -88,8 +88,11 @@ public class HttpAccess
     private static final String PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET = "http.protocol.content-charset";
     private static final String PROPERTY_HEADER_CONTENT_DISPOSITION = "Content-Disposition";
     private static final String PROPERTY_HEADER_CONTENT_LENGTH = "Content-Length";
+    private static final String PROPERTY_HEADER_CONTENT_TYPE = "Content-Type";
     private static final String SEPARATOR = ",";
     private static final String PATTERN_FILENAME = ".*filename=\"([^\"]+)";
+    private static final String DEFAULT_MIME_TYPE = "application/octet-stream";
+    private static final String SEPARATOR_CONTENT_TYPE = ";";
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -635,7 +638,28 @@ public class HttpAccess
                 lSize = Long.parseLong( headerContentLength.getValue(  ) );
             }
 
-            fileItem = new MemoryFileItem( method.getResponseBody(  ), strFileName, lSize );
+            // Get the content type of the file
+            String strContentType = StringUtils.EMPTY;
+
+            Header headerContentType = method.getResponseHeader( PROPERTY_HEADER_CONTENT_TYPE );
+
+            if ( headerContentType != null )
+            {
+                strContentType = headerContentType.getValue(  );
+
+                if ( StringUtils.isNotBlank( strContentType ) )
+                {
+                    int nIndexOfSeparator = strContentType.indexOf( SEPARATOR_CONTENT_TYPE );
+                    strContentType = strContentType.substring( 0, nIndexOfSeparator );
+                }
+            }
+
+            if ( StringUtils.isBlank( strContentType ) )
+            {
+                strContentType = DEFAULT_MIME_TYPE;
+            }
+
+            fileItem = new MemoryFileItem( method.getResponseBody(  ), strFileName, lSize, strContentType );
         }
         catch ( HttpException e )
         {

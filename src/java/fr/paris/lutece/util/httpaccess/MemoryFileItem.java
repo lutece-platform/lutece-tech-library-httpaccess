@@ -53,18 +53,21 @@ public class MemoryFileItem implements FileItem
     private byte[] _data;
     private String _strName;
     private long _lSize;
+    private String _strContentType;
 
     /**
      * Constructor
      * @param data the data
      * @param strName the file name
      * @param lSize the size of the file
+     * @param strContentType the content type of the file
      */
-    public MemoryFileItem( byte[] data, String strName, long lSize )
+    public MemoryFileItem( byte[] data, String strName, long lSize, String strContentType )
     {
         _data = data;
         _strName = strName;
         _lSize = lSize;
+        _strContentType = strContentType;
     }
 
     /**
@@ -84,12 +87,11 @@ public class MemoryFileItem implements FileItem
     }
 
     /**
-     * Not supported
-     * @return null
+     * {@inheritDoc}
      */
     public String getContentType(  )
     {
-        return null;
+        return _strContentType;
     }
 
     /**
