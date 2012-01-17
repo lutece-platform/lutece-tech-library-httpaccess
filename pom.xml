@@ -8,7 +8,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.paris.lutece.plugins</groupId>
     <artifactId>library-httpaccess</artifactId>
-    <version>2.3.2-SNAPSHOT</version>
+    <version>2.3.2</version>
     <name>Library HttpAccess</name>
     <description>Http client access library</description>
     <repositories>
@@ -50,8 +50,8 @@
 		<jiraComponentId>10158</jiraComponentId>
 	</properties>
     <scm>
-        <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/library/library-httpaccess</connection>
-        <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/library/library-httpaccess</developerConnection>
-        <url>http://dev.lutece.paris.fr/viewvc/lutece/portal/trunk/plugins/library/library-httpaccess</url>
+        <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/tags/library-httpaccess-2.3.2</connection>
+        <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/tags/library-httpaccess-2.3.2</developerConnection>
+        <url>http://dev.lutece.paris.fr/viewvc/lutece/portal/tags/library-httpaccess-2.3.2</url>
     </scm>
 </project>
