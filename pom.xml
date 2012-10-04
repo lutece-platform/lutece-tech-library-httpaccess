@@ -10,7 +10,7 @@
     <artifactId>library-httpaccess</artifactId>
     <version>2.3.3-SNAPSHOT</version>
     <name>Library HttpAccess</name>
-    <packaging>lutece-plugin</packaging>
+    <packaging>jar</packaging>
     <description>Http client access library</description>
     <repositories>
         <repository>
