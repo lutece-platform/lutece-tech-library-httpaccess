@@ -118,51 +118,43 @@ public class HttpAccess
     {
         String strResponseBody = StringUtils.EMPTY;
 
+        HttpMethodBase method = new GetMethod( strUrl );
+        method.setFollowRedirects( true );
+
+        if ( authenticator != null )
+        {
+            authenticator.authenticateRequest( method, listElements );
+        }
+
         try
         {
-            HttpMethodBase method = new GetMethod( strUrl );
-            method.setFollowRedirects( true );
+            HttpClient client = getHttpClient( method );
+            int nResponse = client.executeMethod( method );
 
-            if ( authenticator != null )
+            if ( nResponse != HttpURLConnection.HTTP_OK )
             {
-                authenticator.authenticateRequest( method, listElements );
+                String strError = "HttpAccess - Error getting URL : " + strUrl + " - return code : " + nResponse;
+                throw new HttpAccessException( strError, null );
             }
 
-            try
-            {
-                HttpClient client = getHttpClient( method );
-                int nResponse = client.executeMethod( method );
-
-                if ( nResponse != HttpURLConnection.HTTP_OK )
-                {
-                    String strError = "HttpAccess - Error getting URL : " + strUrl + " - return code : " + nResponse;
-                    throw new HttpAccessException( strError, null );
-                }
-
-                strResponseBody = method.getResponseBodyAsString(  );
-            }
-            catch ( HttpException e )
-            {
-                String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
-                AppLogService.error( strError + e.getMessage(  ), e );
-                throw new HttpAccessException( strError + e.getMessage(  ), e );
-            }
-            catch ( IOException e )
-            {
-                String strError = "HttpAccess - Error downloading '" + strUrl + "' : ";
-                AppLogService.error( strError + e.getMessage(  ), e );
-                throw new HttpAccessException( strError + e.getMessage(  ), e );
-            }
-            finally
-            {
-                // Release the connection.
-                method.releaseConnection(  );
-            }
+            strResponseBody = method.getResponseBodyAsString(  );
         }
-        catch ( Exception e )
+        catch ( HttpException e )
         {
-            AppLogService.error( e.getMessage(  ), e );
-            throw new HttpAccessException( e.getMessage(  ), e );
+            String strError = "HttpAccess - Error connecting to '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        catch ( IOException e )
+        {
+            String strError = "HttpAccess - Error downloading '" + strUrl + "' : ";
+            AppLogService.error( strError + e.getMessage(  ), e );
+            throw new HttpAccessException( strError + e.getMessage(  ), e );
+        }
+        finally
+        {
+            // Release the connection.
+            method.releaseConnection(  );
         }
 
         return strResponseBody;
