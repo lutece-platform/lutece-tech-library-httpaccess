@@ -89,6 +89,8 @@ public class HttpAccess
     private static final String PROPERTY_HEADER_CONTENT_DISPOSITION = "Content-Disposition";
     private static final String PROPERTY_HEADER_CONTENT_LENGTH = "Content-Length";
     private static final String PROPERTY_HEADER_CONTENT_TYPE = "Content-Type";
+    private static final String PROPERTY_SOCKET_TIMEOUT = "httpAccess.socketTimeout";
+    private static final String PROPERTY_CONNEXION_TIMEOUT = "httpAccess.connexionTimeout";
     private static final String SEPARATOR = ",";
     private static final String PATTERN_FILENAME = ".*filename=\"([^\"]+)";
     private static final String DEFAULT_MIME_TYPE = "application/octet-stream";
@@ -690,6 +692,9 @@ public class HttpAccess
         String strRealm = AppPropertiesService.getProperty( PROPERTY_REALM );
         String strNoProxyFor = AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR );
         String strContentCharset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET );
+        String strSocketTimeout = AppPropertiesService.getProperty( PROPERTY_SOCKET_TIMEOUT );
+        String strConnexionTimeout = AppPropertiesService.getProperty( PROPERTY_CONNEXION_TIMEOUT );
+        
         boolean bNoProxy = false;
 
         // Create an instance of HttpClient.
@@ -740,7 +745,14 @@ public class HttpAccess
         {
             client.getParams(  ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, strContentCharset );
         }
-
+        if ( StringUtils.isNotBlank( strSocketTimeout ))
+        {
+        	client.getParams().setSoTimeout(Integer.parseInt(strSocketTimeout));
+        }
+        if(StringUtils.isNotBlank(strConnexionTimeout))
+        {
+        	client.getHttpConnectionManager().getParams().setConnectionTimeout(Integer.parseInt(strConnexionTimeout));
+        }
         return client;
     }
 
