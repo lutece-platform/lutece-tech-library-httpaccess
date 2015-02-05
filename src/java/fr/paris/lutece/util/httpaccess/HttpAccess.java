@@ -118,11 +118,33 @@ public class HttpAccess
     public String doGet( String strUrl, RequestAuthenticator authenticator, List<String> listElements )
         throws HttpAccessException
     {
+       return doGet(strUrl, authenticator, listElements, null);
+    }
+    
+    /**
+     * Send a GET HTTP request to an Url and return the response content.
+     * @param strUrl The Url to access
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @param headers Map of headers parameters
+     * @return The response content of the Get request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doGet( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headers )
+        throws HttpAccessException
+    {
         String strResponseBody = StringUtils.EMPTY;
 
         HttpMethodBase method = new GetMethod( strUrl );
         method.setFollowRedirects( true );
-
+        if( headers!=null )
+        {
+        	 for ( Entry<String, String> entry : headers.entrySet(  ) )
+             {
+        		 method.setRequestHeader(entry.getKey(  ), entry.getValue(  ));
+              }
+        }
+        
         if ( authenticator != null )
         {
             authenticator.authenticateRequest( method, listElements );
@@ -131,6 +153,7 @@ public class HttpAccess
         try
         {
             HttpClient client = getHttpClient( method );
+            
             int nResponse = client.executeMethod( method );
 
             if ( nResponse != HttpURLConnection.HTTP_OK )
@@ -161,6 +184,9 @@ public class HttpAccess
 
         return strResponseBody;
     }
+    
+    
+    
 
     /**
      * Send a POST HTTP request to an url and return the response content
@@ -174,7 +200,8 @@ public class HttpAccess
     {
         return doPost( strUrl, params, null, null );
     }
-
+    
+    
     /**
      * Send a POST HTTP request to an url and return the response content
      * @param strUrl the url to access
@@ -187,13 +214,41 @@ public class HttpAccess
     public String doPost( String strUrl, Map<String, String> params, RequestAuthenticator authenticator,
         List<String> listElements ) throws HttpAccessException
     {
+    	return doPost(strUrl, params, authenticator, listElements, null);
+    }
+
+    /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @param headers Map of headers parameters
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPost( String strUrl, Map<String, String> params, RequestAuthenticator authenticator,
+        List<String> listElements, Map<String, String> headers  ) throws HttpAccessException
+    {
         String strResponseBody = StringUtils.EMPTY;
 
         PostMethod method = new PostMethod( strUrl );
-
-        for ( Entry<String, String> entry : params.entrySet(  ) )
+        
+        if( params!=null )
         {
-            method.addParameter( entry.getKey(  ), entry.getValue(  ) );
+	        for ( Entry<String, String> entry : params.entrySet(  ) )
+	        {
+	            method.addParameter( entry.getKey(  ), entry.getValue(  ) );
+	        }
+        }
+        
+        
+        if( headers!=null )
+        {
+        	 for ( Entry<String, String> entry : headers.entrySet(  ) )
+             {
+        		 method.setRequestHeader(entry.getKey(  ), entry.getValue(  ));
+              }
         }
 
         if ( authenticator != null )
@@ -342,9 +397,38 @@ public class HttpAccess
         RequestAuthenticator authenticator, List<String> listElements )
         throws HttpAccessException
     {
+        
+
+        return doPostMultiPart(strUrl, params, fileItems, authenticator, listElements, null);
+    }
+    
+    
+    
+    /**
+     * Send a POST HTTP request to an url and return the response content
+     * @param strUrl the url to access
+     * @param params the list of parameters to post
+     * @param fileItems The list of file items
+     * @param authenticator The {@link RequestAuthenticator}
+     * @param listElements to include in the signature
+     * @param headers Map of headers parameters
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException if there is a problem to access to the given Url
+     */
+    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, FileItem> fileItems,
+        RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headers   )
+        throws HttpAccessException
+    {
         String strResponseBody = StringUtils.EMPTY;
         PostMethod method = new PostMethod( strUrl );
 
+        if( headers!=null )
+        {
+        	 for ( Entry<String, String> entry : headers.entrySet(  ) )
+             {
+        		 method.setRequestHeader(entry.getKey(  ), entry.getValue(  ));
+              }
+        }
         if ( ( fileItems != null ) && !fileItems.isEmpty(  ) )
         {
             // Calculate the size
@@ -395,6 +479,8 @@ public class HttpAccess
                     nIndex++;
                 }
             }
+            
+            
 
             method.setRequestEntity( new MultipartRequestEntity( parts, method.getParams(  ) ) );
         }
