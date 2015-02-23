@@ -1,12 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document>
-	<properties>
-		<title>Plugin</title>
-	</properties>
-	<body>
-		<section name="Plugin">
-			<subsection name="Introduction">
-			</subsection>
-		</section>
-	</body>
+    <properties>
+        <title>Library HttpAccess</title>
+    </properties>
+    <body>
+        <section name="Library HttpAccess">
+            <subsection name="Introduction">
+                <p>
+                    Cette librairie fournit des méthodes simplifiées pour exécuter des requêtes HTTP (GET, POST, ...) 
+                    et permettant de passer au travers de proxys notamment basés sur des authentifications NTLM. 
+                </p>
+                <p>
+                    Les plugins doivent s'appuyer en priorité sur cette librairie de manière
+                    à mutualiser la configuration.
+                </p>
+            </subsection>
+            <subsection name="Configuration">
+                <p>
+                    La configuration est définie dans le fichier <code>WEB-INF/conf/plugins/httpaccess.properties</code>.
+                    <pre>
+################################################################
+## Proxy settings
+httpAccess.proxyHost=
+httpAccess.proxyPort=
+httpAccess.proxyUserName=
+httpAccess.proxyPassword=
+# computer name
+# httpaccess.hostName=
+# domain name
+# httpAccess.domainName=
+# httpaccess.realm=
+httpAccess.noProxyFor=
+# Content charset - optionnal
+httpAccess.contentCharset=
+                    </pre>
+                </p>
+            </subsection>
+        </section>
+    </body>
 </document>

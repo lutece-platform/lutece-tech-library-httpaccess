@@ -1,12 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document>
-	<properties>
-		<title>Plugin</title>
-	</properties>
-	<body>
-		<section name="Plugin">
-			<subsection name="Introduction">
-			</subsection>
-		</section>
-	</body>
+    <properties>
+        <title>Library HttpAccess</title>
+    </properties>
+    <body>
+        <section name="Library HttpAccess">
+            <subsection name="Introduction">
+                <p>
+                    This library provides simplified methods to perform HTTP requests (GET, POST, ...)
+                    and to pass through proxies notably based on NTLM authentications.
+                </p>
+                <p>
+                    Plugins should be based primarily on the library so
+                    to pool configuration.
+                </p>
+            </subsection>
+            <subsection name="Configuration">
+                <p>
+                    Configuration is defined in the <code>WEB-INF/conf/plugins/httpaccess.properties</code>.
+                    <pre>
+################################################################
+## Proxy settings
+httpAccess.proxyHost=
+httpAccess.proxyPort=
+httpAccess.proxyUserName=
+httpAccess.proxyPassword=
+# computer name
+# httpaccess.hostName=
+# domain name
+# httpAccess.domainName=
+# httpaccess.realm=
+httpAccess.noProxyFor=
+# Content charset - optionnal
+httpAccess.contentCharset=
+                    </pre>
+                </p>
+            </subsection>
+        </section>
+    </body>
 </document>
