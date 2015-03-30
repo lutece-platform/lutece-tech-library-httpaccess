@@ -39,6 +39,14 @@ package fr.paris.lutece.util.httpaccess;
  */
 public class HttpAccessException extends Exception
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2139683839171114011L;
+	/**
+	 * 
+	 */
+	private Integer _nResponseCode;
     /**
      * Creates a new instance of HttpAccessException
      * @param strMessage The error message
@@ -48,4 +56,23 @@ public class HttpAccessException extends Exception
     {
         super( strMessage, e );
     }
+    /**
+     * Creates a new instance of HttpAccessException
+     * @param strMessage The error message
+     * @param nResponseCode the http  response code associated to the Exception
+     * @param e The exception
+     */
+    public HttpAccessException( String strMessage,Integer nResponseCode, Exception e )
+    {
+        super( strMessage, e );
+        _nResponseCode=nResponseCode;
+    }
+    /**
+     * 
+     * @return the http response code associated to the Exception
+     */
+	public Integer getResponseCode() {
+		return _nResponseCode;
+	}
+
 }
