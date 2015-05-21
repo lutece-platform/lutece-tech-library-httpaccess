@@ -3,6 +3,7 @@ package fr.paris.lutece.util.httpaccess;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethodBase;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.NTCredentials;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -31,13 +32,22 @@ public class HttpAccessService {
     private static final String PROPERTY_NO_PROXY_FOR = "httpAccess.noProxyFor";
     private static final String PROPERTY_CONTENT_CHARSET = "httpAccess.contentCharset";
     private static final String PROPERTY_SOCKET_TIMEOUT = "httpAccess.socketTimeout";
-    private static final String PROPERTY_CONNEXION_TIMEOUT = "httpAccess.connexionTimeout";
+    private static final String PROPERTY_CONNECTION_TIMEOUT = "httpAccess.connectionTimeout";
+    private static final String PROPERTY_CONNECTION_POOL_ENABLED= "httpAccess.connectionPoolEnabled";
+    private static final String PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION ="httpAccess.connectionPoolMaxTotalConnections";
+    private static final String PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST ="httpAccess.connectionPoolMaxConnectionsPerHost";
+    
     private static final String PROPERTY_HTTP_RESPONSES_CODE_AUTHORIZED = "httpAccess.responsesCodeAuthorized";
+    
+
+    
     private static final String PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET = "http.protocol.content-charset";
 	
     private static final String SEPARATOR = ",";
     
 	private static HttpAccessService _singleton;
+	private static HttpClient _multiThreadHttpClient;
+	
 	private  String _strProxyHost;
 	private  String _strProxyPort;
 	private  String _strProxyUserName;
@@ -48,7 +58,12 @@ public class HttpAccessService {
 	private  String _strNoProxyFor;
 	private  String _strContentCharset;
 	private  String _strSocketTimeout;
-	private  String _strConnexionTimeout;
+	private  String _strConnectionTimeout;
+	private  boolean _bConnectionPoolEnabled;
+	private  String _strConnectionPoolMaxTotalConnection;
+	private  String _strConnectionPoolMaxConnectionPerHost;
+	
+	
 	private  String[] _tabResponsesCodeErrors={DEFAULT_RESPONSE_CODE_AUTHORIZED};
   
 	
@@ -69,13 +84,48 @@ public class HttpAccessService {
 	     * @param method The method
 	     * @return An HTTP client authenticated
 	     */
-	    public  HttpClient getHttpClient( HttpMethodBase method )
+	
+	public synchronized HttpClient getHttpClient( HttpMethodBase method )
 	    {
-	        
+	    	 HttpClient client; 
+	    	
+	    	if(_bConnectionPoolEnabled)
+	    	{
+	    		
+	    		if(_multiThreadHttpClient!=null)
+	    		{
+	    			
+	    			return _multiThreadHttpClient;
+	    		}
+	    		else
+	    		{
+	    			MultiThreadedHttpConnectionManager connectionManager = 
+	    		      		new MultiThreadedHttpConnectionManager();
+	    			
+	    			if(StringUtils.isEmpty(_strConnectionPoolMaxConnectionPerHost))
+	    			{
+	    				connectionManager.getParams().setDefaultMaxConnectionsPerHost(Integer.parseInt(_strConnectionPoolMaxConnectionPerHost));
+	    			}
+	    			if(StringUtils.isEmpty(_strConnectionPoolMaxTotalConnection))
+	    			{
+	    				connectionManager.getParams().setMaxTotalConnections(Integer.parseInt(_strConnectionPoolMaxTotalConnection));
+	    			}
+	    			client = new HttpClient( connectionManager );
+	    			
+	    		}
+	    			
+	    		
+	    	}
+	    	else
+	    	{
+	    	
+	    		client = new HttpClient(  );
+	    	}
+	    	
 	        boolean bNoProxy = false;
 
 	        // Create an instance of HttpClient.
-	        HttpClient client = new HttpClient(  );
+	      
 
 	        // If proxy host and port found, set the correponding elements
 	        if ( StringUtils.isNotBlank( _strProxyHost ) && StringUtils.isNotBlank( _strProxyPort ) &&
@@ -126,9 +176,9 @@ public class HttpAccessService {
 	        {
 	        	client.getParams().setSoTimeout(Integer.parseInt(_strSocketTimeout));
 	        }
-	        if(StringUtils.isNotBlank(_strConnexionTimeout))
+	        if(StringUtils.isNotBlank(_strConnectionTimeout))
 	        {
-	        	client.getHttpConnectionManager().getParams().setConnectionTimeout(Integer.parseInt(_strConnexionTimeout));
+	        	client.getHttpConnectionManager().getParams().setConnectionTimeout(Integer.parseInt(_strConnectionTimeout));
 	        }
 	        return client;
 	    }
@@ -250,12 +300,18 @@ public class HttpAccessService {
 		        _strNoProxyFor = AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR );
 		        _strContentCharset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET );
 		        _strSocketTimeout = AppPropertiesService.getProperty( PROPERTY_SOCKET_TIMEOUT );
-		        _strConnexionTimeout = AppPropertiesService.getProperty( PROPERTY_CONNEXION_TIMEOUT );
+		        _strConnectionTimeout = AppPropertiesService.getProperty( PROPERTY_CONNECTION_TIMEOUT );
 		        String strTabResponsesCodeAuthorized= AppPropertiesService.getProperty(PROPERTY_HTTP_RESPONSES_CODE_AUTHORIZED);
 		        if(!StringUtils.isEmpty(strTabResponsesCodeAuthorized))
 		        {	
 		        	_tabResponsesCodeErrors=strTabResponsesCodeAuthorized.split(SEPARATOR);
 		        }
+		        
+		        _bConnectionPoolEnabled = AppPropertiesService.getPropertyBoolean( PROPERTY_CONNECTION_POOL_ENABLED,false );
+		        _strConnectionPoolMaxTotalConnection=AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION);
+		        _strConnectionPoolMaxConnectionPerHost=AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST);
+		        
+		     
 		        
 		        
 		}
