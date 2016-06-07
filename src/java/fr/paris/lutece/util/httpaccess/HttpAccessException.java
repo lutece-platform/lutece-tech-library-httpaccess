@@ -34,21 +34,22 @@
 package fr.paris.lutece.util.httpaccess;
 
 
+// TODO: Auto-generated Javadoc
 /**
- * Exception thrown by the util class HttpAccess
+ * Exception thrown by the util class HttpAccess.
  */
 public class HttpAccessException extends Exception
 {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -2139683839171114011L;
-	/**
-	 * 
-	 */
-	private Integer _nResponseCode;
+    
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -2139683839171114011L;
+
+    /** The _n response code. */
+    private Integer _nResponseCode;
+
     /**
-     * Creates a new instance of HttpAccessException
+     * Creates a new instance of HttpAccessException.
+     *
      * @param strMessage The error message
      * @param e The exception
      */
@@ -56,23 +57,27 @@ public class HttpAccessException extends Exception
     {
         super( strMessage, e );
     }
+
     /**
-     * Creates a new instance of HttpAccessException
+     * Creates a new instance of HttpAccessException.
+     *
      * @param strMessage The error message
      * @param nResponseCode the http  response code associated to the Exception
      * @param e The exception
      */
-    public HttpAccessException( String strMessage,Integer nResponseCode, Exception e )
+    public HttpAccessException( String strMessage, Integer nResponseCode, Exception e )
     {
         super( strMessage, e );
-        _nResponseCode=nResponseCode;
+        _nResponseCode = nResponseCode;
     }
+
     /**
-     * 
+     * Gets the response code.
+     *
      * @return the http response code associated to the Exception
      */
-	public Integer getResponseCode() {
-		return _nResponseCode;
-	}
-
+    public Integer getResponseCode(  )
+    {
+        return _nResponseCode;
+    }
 }
