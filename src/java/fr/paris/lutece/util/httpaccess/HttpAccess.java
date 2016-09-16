@@ -66,6 +66,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -799,7 +800,8 @@ public class HttpAccess
                 method.setRequestHeader( entry.getKey(  ), entry.getValue(  ) );
             }
         }
-        ArrayList<Part> parts = new ArrayList<Part>();
+
+        ArrayList<Part> parts = new ArrayList<Part>(  );
 
         if ( ( fileItems != null ) && !fileItems.isEmpty(  ) )
         {
@@ -827,23 +829,23 @@ public class HttpAccess
             }
         }
 
-        if( ( params != null ) && !params.isEmpty(  ) )
+        if ( ( params != null ) && !params.isEmpty(  ) )
         {
-	        // Additionnal parameters
-	        for ( Entry<String, List<String>> param : params.entrySet(  ) )
-	        {
-	            for ( String strValue : param.getValue(  ) )
-	            {
-	            	parts.add( new StringPart( param.getKey(  ), strValue ) );
-	            }
-	        }
+            // Additionnal parameters
+            for ( Entry<String, List<String>> param : params.entrySet(  ) )
+            {
+                for ( String strValue : param.getValue(  ) )
+                {
+                    parts.add( new StringPart( param.getKey(  ), strValue ) );
+                }
+            }
         }
-        
-        if ( ! parts.isEmpty(  ) )
-        {        	
-	        method.setRequestEntity( new MultipartRequestEntity( parts.toArray(new Part[]{}), method.getParams(  ) ) );
+
+        if ( !parts.isEmpty(  ) )
+        {
+            method.setRequestEntity( new MultipartRequestEntity( parts.toArray( new Part[] {  } ), method.getParams(  ) ) );
         }
-        
+
         if ( authenticator != null )
         {
             authenticator.authenticateRequest( method, listElements );

@@ -53,109 +53,108 @@ import org.apache.commons.lang.StringUtils;
  */
 public class HttpAccessService
 {
-    
     /** The Constant DEFAULT_RESPONSE_CODE_AUTHORIZED. */
     private static final String DEFAULT_RESPONSE_CODE_AUTHORIZED = "200";
-    
+
     /** The Constant PROPERTY_PROXY_HOST. */
     private static final String PROPERTY_PROXY_HOST = "httpAccess.proxyHost";
-    
+
     /** The Constant PROPERTY_PROXY_PORT. */
     private static final String PROPERTY_PROXY_PORT = "httpAccess.proxyPort";
-    
+
     /** The Constant PROPERTY_PROXY_USERNAME. */
     private static final String PROPERTY_PROXY_USERNAME = "httpAccess.proxyUserName";
-    
+
     /** The Constant PROPERTY_PROXY_PASSWORD. */
     private static final String PROPERTY_PROXY_PASSWORD = "httpAccess.proxyPassword";
-    
+
     /** The Constant PROPERTY_HOST_NAME. */
     private static final String PROPERTY_HOST_NAME = "httpAccess.hostName";
-    
+
     /** The Constant PROPERTY_DOMAIN_NAME. */
     private static final String PROPERTY_DOMAIN_NAME = "httpAccess.domainName";
-    
+
     /** The Constant PROPERTY_REALM. */
     private static final String PROPERTY_REALM = "httpAccess.realm";
-    
+
     /** The Constant PROPERTY_NO_PROXY_FOR. */
     private static final String PROPERTY_NO_PROXY_FOR = "httpAccess.noProxyFor";
-    
+
     /** The Constant PROPERTY_CONTENT_CHARSET. */
     private static final String PROPERTY_CONTENT_CHARSET = "httpAccess.contentCharset";
-    
+
     /** The Constant PROPERTY_SOCKET_TIMEOUT. */
     private static final String PROPERTY_SOCKET_TIMEOUT = "httpAccess.socketTimeout";
-    
+
     /** The Constant PROPERTY_CONNECTION_TIMEOUT. */
     private static final String PROPERTY_CONNECTION_TIMEOUT = "httpAccess.connectionTimeout";
-    
+
     /** The Constant PROPERTY_CONNECTION_POOL_ENABLED. */
     private static final String PROPERTY_CONNECTION_POOL_ENABLED = "httpAccess.connectionPoolEnabled";
-    
+
     /** The Constant PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION. */
     private static final String PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION = "httpAccess.connectionPoolMaxTotalConnections";
-    
+
     /** The Constant PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST. */
     private static final String PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST = "httpAccess.connectionPoolMaxConnectionsPerHost";
-    
+
     /** The Constant PROPERTY_HTTP_RESPONSES_CODE_AUTHORIZED. */
     private static final String PROPERTY_HTTP_RESPONSES_CODE_AUTHORIZED = "httpAccess.responsesCodeAuthorized";
-    
+
     /** The Constant PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET. */
     private static final String PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET = "http.protocol.content-charset";
-    
+
     /** The Constant SEPARATOR. */
     private static final String SEPARATOR = ",";
-    
+
     /** The _singleton. */
     private static HttpAccessService _singleton;
-    
+
     /** The _multi thread http client. */
     private static HttpClient _multiThreadHttpClient;
-    
+
     /** The _str proxy host. */
     private String _strProxyHost;
-    
+
     /** The _str proxy port. */
     private String _strProxyPort;
-    
+
     /** The _str proxy user name. */
     private String _strProxyUserName;
-    
+
     /** The _str proxy password. */
     private String _strProxyPassword;
-    
+
     /** The _str host name. */
     private String _strHostName;
-    
+
     /** The _str domain name. */
     private String _strDomainName;
-    
+
     /** The _str realm. */
     private String _strRealm;
-    
+
     /** The _str no proxy for. */
     private String _strNoProxyFor;
-    
+
     /** The _str content charset. */
     private String _strContentCharset;
-    
+
     /** The _str socket timeout. */
     private String _strSocketTimeout;
-    
+
     /** The _str connection timeout. */
     private String _strConnectionTimeout;
-    
+
     /** The _b connection pool enabled. */
     private boolean _bConnectionPoolEnabled;
-    
+
     /** The _str connection pool max total connection. */
     private String _strConnectionPoolMaxTotalConnection;
-    
+
     /** The _str connection pool max connection per host. */
     private String _strConnectionPoolMaxConnectionPerHost;
-    
+
     /** The _tab responses code errors. */
     private String[] _tabResponsesCodeErrors = { DEFAULT_RESPONSE_CODE_AUTHORIZED };
 

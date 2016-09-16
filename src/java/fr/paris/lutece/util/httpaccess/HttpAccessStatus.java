@@ -33,19 +33,21 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
+
 /**
  * Constants class for HTTP response code
  */
 public final class HttpAccessStatus
 {
-	//ok
-	public final static Integer OK = 200;
-	//created
-	public final static Integer CREATED = 201;
-	
-	//not found
-	public final static Integer NOT_FOUND = 404;
-	//bad request
-	public final static Integer BAD_REQUEST = 400;
+    //ok
+    public final static Integer OK = 200;
 
+    //created
+    public final static Integer CREATED = 201;
+
+    //not found
+    public final static Integer NOT_FOUND = 404;
+
+    //bad request
+    public final static Integer BAD_REQUEST = 400;
 }

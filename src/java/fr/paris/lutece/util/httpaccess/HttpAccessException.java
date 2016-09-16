@@ -40,7 +40,6 @@ package fr.paris.lutece.util.httpaccess;
  */
 public class HttpAccessException extends Exception
 {
-    
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = -2139683839171114011L;
 
