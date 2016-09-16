@@ -66,7 +66,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -799,24 +799,10 @@ public class HttpAccess
                 method.setRequestHeader( entry.getKey(  ), entry.getValue(  ) );
             }
         }
+        ArrayList<Part> parts = new ArrayList<Part>();
 
         if ( ( fileItems != null ) && !fileItems.isEmpty(  ) )
         {
-            // Calculate the size
-            int nSizeParam = 0;
-
-            for ( Entry<String, List<String>> param : params.entrySet(  ) )
-            {
-                nSizeParam += param.getValue(  ).size(  );
-            }
-
-            int nSize = fileItems.size(  ) + nSizeParam;
-
-            // Part in which we store the parameters + files
-            Part[] parts = new Part[nSize];
-
-            int nIndex = 0;
-
             // Store the Files
             for ( Entry<String, FileItem> paramFileItem : fileItems.entrySet(  ) )
             {
@@ -829,8 +815,7 @@ public class HttpAccess
                     try
                     {
                         fileItem.write( file );
-                        parts[nIndex] = new FilePart( paramFileItem.getKey(  ), file );
-                        nIndex++;
+                        parts.add( new FilePart( paramFileItem.getKey(  ), file ) );
                     }
                     catch ( Exception e )
                     {
@@ -840,20 +825,25 @@ public class HttpAccess
                     }
                 }
             }
-
-            // Additionnal parameters
-            for ( Entry<String, List<String>> param : params.entrySet(  ) )
-            {
-                for ( String strValue : param.getValue(  ) )
-                {
-                    parts[nIndex] = new StringPart( param.getKey(  ), strValue );
-                    nIndex++;
-                }
-            }
-
-            method.setRequestEntity( new MultipartRequestEntity( parts, method.getParams(  ) ) );
         }
 
+        if( ( params != null ) && !params.isEmpty(  ) )
+        {
+	        // Additionnal parameters
+	        for ( Entry<String, List<String>> param : params.entrySet(  ) )
+	        {
+	            for ( String strValue : param.getValue(  ) )
+	            {
+	            	parts.add( new StringPart( param.getKey(  ), strValue ) );
+	            }
+	        }
+        }
+        
+        if ( ! parts.isEmpty(  ) )
+        {        	
+	        method.setRequestEntity( new MultipartRequestEntity( parts.toArray(new Part[]{}), method.getParams(  ) ) );
+        }
+        
         if ( authenticator != null )
         {
             authenticator.authenticateRequest( method, listElements );

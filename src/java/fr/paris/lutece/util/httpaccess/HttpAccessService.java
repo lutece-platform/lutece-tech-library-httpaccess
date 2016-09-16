@@ -169,6 +169,7 @@ public class HttpAccessService
         if ( _singleton == null )
         {
             _singleton = new HttpAccessService(  );
+            // WARNING if .init(  ) throw exception, the singleton is already defined
             _singleton.init(  );
         }
 
