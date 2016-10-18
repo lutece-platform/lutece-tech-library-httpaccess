@@ -831,12 +831,13 @@ public class HttpAccess
 
         if ( ( params != null ) && !params.isEmpty(  ) )
         {
+            String charset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET );
             // Additionnal parameters
             for ( Entry<String, List<String>> param : params.entrySet(  ) )
             {
                 for ( String strValue : param.getValue(  ) )
                 {
-                    parts.add( new StringPart( param.getKey(  ), strValue ) );
+                    parts.add( new StringPart( param.getKey(  ), strValue, charset ) );
                 }
             }
         }
