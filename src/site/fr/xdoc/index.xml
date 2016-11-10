@@ -33,6 +33,8 @@ httpAccess.proxyPassword=
 httpAccess.noProxyFor=
 # Content charset - optionnal
 httpAccess.contentCharset=
+# Element charset - optionnal
+httpAccess.elementCharset=
                     </pre>
                 </p>
             </subsection>

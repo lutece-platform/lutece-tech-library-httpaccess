@@ -33,6 +33,8 @@ httpAccess.proxyPassword=
 httpAccess.noProxyFor=
 # Content charset - optionnal
 httpAccess.contentCharset=
+# Element charset - optionnal
+httpAccess.elementCharset=
 #Connexion Timeout -Times client tries to connect to the server in milliseconds - optionnal
 httpAccess.connexionTimeout=
 #Socket Timeout -Times which the client wait after establish connexion for response in milliseconds - optional

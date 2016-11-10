@@ -83,6 +83,9 @@ public class HttpAccessService
     /** The Constant PROPERTY_CONTENT_CHARSET. */
     private static final String PROPERTY_CONTENT_CHARSET = "httpAccess.contentCharset";
 
+    /** The Constant PROPERTY_ELEMENT_CHARSET. */
+    private static final String PROPERTY_ELEMENT_CHARSET = "httpAccess.elementCharset";
+
     /** The Constant PROPERTY_SOCKET_TIMEOUT. */
     private static final String PROPERTY_SOCKET_TIMEOUT = "httpAccess.socketTimeout";
 
@@ -103,6 +106,9 @@ public class HttpAccessService
 
     /** The Constant PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET. */
     private static final String PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET = "http.protocol.content-charset";
+
+    /** The Constant PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET. */
+    private static final String PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET = "http.protocol.element-charset";
 
     /** The Constant SEPARATOR. */
     private static final String SEPARATOR = ",";
@@ -139,6 +145,9 @@ public class HttpAccessService
 
     /** The _str content charset. */
     private String _strContentCharset;
+
+    /** The _str element charset. */
+    private String _strElementCharset;
 
     /** The _str socket timeout. */
     private String _strSocketTimeout;
@@ -264,6 +273,11 @@ public class HttpAccessService
         if ( StringUtils.isNotBlank( _strContentCharset ) )
         {
             client.getParams(  ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, _strContentCharset );
+        }
+
+        if ( StringUtils.isNotBlank( _strElementCharset ) )
+        {
+            client.getParams(  ).setParameter( PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET, _strElementCharset );
         }
 
         if ( StringUtils.isNotBlank( _strSocketTimeout ) )
@@ -397,6 +411,7 @@ public class HttpAccessService
         _strRealm = AppPropertiesService.getProperty( PROPERTY_REALM );
         _strNoProxyFor = AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR );
         _strContentCharset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET );
+        _strElementCharset = AppPropertiesService.getProperty( PROPERTY_ELEMENT_CHARSET );
         _strSocketTimeout = AppPropertiesService.getProperty( PROPERTY_SOCKET_TIMEOUT );
         _strConnectionTimeout = AppPropertiesService.getProperty( PROPERTY_CONNECTION_TIMEOUT );
 
