@@ -26,6 +26,14 @@ httpAccess.proxyPassword=
 httpAccess.noProxyFor=
 # Content charset - optionnal
 httpAccess.contentCharset=
+# Element charset - optionnal
+httpAccess.elementCharset=
+#Connexion Timeout -Times client tries to connect to the server in milliseconds - optionnal
+httpAccess.connexionTimeout=
+#Socket Timeout -Times which the client wait after establish connexion for response in milliseconds - optional
+httpAccess.socketTimeout=
+#Http responses code authorized (200->OK,201 ->Created,...)
+httpAccess.responsesCodeAuthorized=200,201,202,203,204,205,206,207,210
                     
 ```
 
