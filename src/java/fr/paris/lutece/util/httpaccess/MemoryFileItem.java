@@ -34,6 +34,7 @@
 package fr.paris.lutece.util.httpaccess;
 
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemHeaders;
 
 import java.io.File;
 import java.io.IOException;
@@ -188,6 +189,14 @@ public class MemoryFileItem implements FileItem
      */
     public void write( File file ) throws Exception
     {
+        throw new UnsupportedOperationException(  );
+    }
+
+    public FileItemHeaders getHeaders() {
+        throw new UnsupportedOperationException(  );
+    }
+
+    public void setHeaders(FileItemHeaders headers) {
         throw new UnsupportedOperationException(  );
     }
 }
