@@ -31,28 +31,20 @@
  *
  * License 1.0
  */
+
 package fr.paris.lutece.util.httpaccess;
 
-import org.apache.commons.httpclient.HttpStatus;
-
 /**
- * Constants class for HTTP response code
+ * ResponseStatusValidator
  */
-public final class HttpAccessStatus extends HttpStatus
+public interface ResponseStatusValidator
 {
-    /** @deprecated Use SC_OK instead */
-    @Deprecated
-    public final static Integer OK = 200;
-
-    /** @deprecated Use SC_CREATED instead */
-    @Deprecated
-    public final static Integer CREATED = 201;
-
-    /** @deprecated Use SC_NOT_FOUND instead */
-    @Deprecated
-    public final static Integer NOT_FOUND = 404;
-
-    /** @deprecated Use SC_BAD_REQUEST instead */
-    @Deprecated
-    public final static Integer BAD_REQUEST = 400;
+    /**
+     * Validate response status
+     * 
+     * @param nStatus
+     *            the response status
+     * @return true if validated
+     */
+    boolean validate( int nStatus );
 }

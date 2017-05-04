@@ -31,28 +31,63 @@
  *
  * License 1.0
  */
+
 package fr.paris.lutece.util.httpaccess;
 
-import org.apache.commons.httpclient.HttpStatus;
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
 /**
- * Constants class for HTTP response code
+ * SimpleResponseValidator
  */
-public final class HttpAccessStatus extends HttpStatus
+public class SimpleResponseValidator implements ResponseStatusValidator
 {
-    /** @deprecated Use SC_OK instead */
-    @Deprecated
-    public final static Integer OK = 200;
+    /** The Constant SEPARATOR. */
+    private static final String SEPARATOR = ",";
 
-    /** @deprecated Use SC_CREATED instead */
-    @Deprecated
-    public final static Integer CREATED = 201;
+    private static String [ ] _aAuthorizedStatus;
 
-    /** @deprecated Use SC_NOT_FOUND instead */
-    @Deprecated
-    public final static Integer NOT_FOUND = 404;
+    /**
+     * Constructor
+     * 
+     * @param strList
+     *            The list of authorized status
+     */
+    public SimpleResponseValidator( String strList )
+    {
+        _aAuthorizedStatus = strList.split( SEPARATOR );
+    }
 
-    /** @deprecated Use SC_BAD_REQUEST instead */
-    @Deprecated
-    public final static Integer BAD_REQUEST = 400;
+    /**
+     * Load a Status validator from properties
+     * 
+     * @param strProperty
+     *            The property key
+     * @param strDefault
+     *            The default value
+     * @return A responseValidator initialized with the authorized status list
+     */
+    public static ResponseStatusValidator loadFromProperty( String strProperty, String strDefault )
+    {
+        String strAuthorizedStatusList = AppPropertiesService.getProperty( strProperty, strDefault );
+        return new SimpleResponseValidator( strAuthorizedStatusList );
+    }
+
+    /**
+     * {@inheritDoc }
+     */
+    @Override
+    public boolean validate( int nStatus )
+    {
+        String strStatus = String.valueOf( nStatus );
+        for ( String strCode : _aAuthorizedStatus )
+        {
+            if ( strStatus.equals( strCode.trim( ) ) )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

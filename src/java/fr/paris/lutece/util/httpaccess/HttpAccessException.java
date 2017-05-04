@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014, Mairie de Paris
+ * Copyright (c) 2002-2017, Mairie de Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-
 // TODO: Auto-generated Javadoc
 /**
  * Exception thrown by the util class HttpAccess.
@@ -49,8 +48,10 @@ public class HttpAccessException extends Exception
     /**
      * Creates a new instance of HttpAccessException.
      *
-     * @param strMessage The error message
-     * @param e The exception
+     * @param strMessage
+     *            The error message
+     * @param e
+     *            The exception
      */
     public HttpAccessException( String strMessage, Exception e )
     {
@@ -60,9 +61,12 @@ public class HttpAccessException extends Exception
     /**
      * Creates a new instance of HttpAccessException.
      *
-     * @param strMessage The error message
-     * @param nResponseCode the http  response code associated to the Exception
-     * @param e The exception
+     * @param strMessage
+     *            The error message
+     * @param nResponseCode
+     *            the http response code associated to the Exception
+     * @param e
+     *            The exception
      */
     public HttpAccessException( String strMessage, Integer nResponseCode, Exception e )
     {
@@ -75,7 +79,7 @@ public class HttpAccessException extends Exception
      *
      * @return the http response code associated to the Exception
      */
-    public Integer getResponseCode(  )
+    public Integer getResponseCode( )
     {
         return _nResponseCode;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014, Mairie de Paris
+ * Copyright (c) 2002-2017, Mairie de Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
-
 /**
  *
  * MemoryFileItem
@@ -51,19 +50,24 @@ import java.io.UnsupportedEncodingException;
 public class MemoryFileItem implements FileItem
 {
     private static final long serialVersionUID = 922231338093963479L;
-    private byte[] _data;
+    private byte [ ] _data;
     private String _strName;
     private long _lSize;
     private String _strContentType;
 
     /**
      * Constructor
-     * @param data the data
-     * @param strName the file name
-     * @param lSize the size of the file
-     * @param strContentType the content type of the file
+     * 
+     * @param data
+     *            the data
+     * @param strName
+     *            the file name
+     * @param lSize
+     *            the size of the file
+     * @param strContentType
+     *            the content type of the file
      */
-    public MemoryFileItem( byte[] data, String strName, long lSize, String strContentType )
+    public MemoryFileItem( byte [ ] data, String strName, long lSize, String strContentType )
     {
         _data = data;
         _strName = strName;
@@ -74,7 +78,7 @@ public class MemoryFileItem implements FileItem
     /**
      * {@inheritDoc}
      */
-    public void delete(  )
+    public void delete( )
     {
         // Nothing
     }
@@ -82,7 +86,7 @@ public class MemoryFileItem implements FileItem
     /**
      * {@inheritDoc}
      */
-    public byte[] get(  )
+    public byte [ ] get( )
     {
         return _data;
     }
@@ -90,16 +94,17 @@ public class MemoryFileItem implements FileItem
     /**
      * {@inheritDoc}
      */
-    public String getContentType(  )
+    public String getContentType( )
     {
         return _strContentType;
     }
 
     /**
      * Not supported
+     * 
      * @return null
      */
-    public String getFieldName(  )
+    public String getFieldName( )
     {
         return null;
     }
@@ -107,15 +112,15 @@ public class MemoryFileItem implements FileItem
     /**
      * {@inheritDoc}
      */
-    public InputStream getInputStream(  ) throws IOException
+    public InputStream getInputStream( ) throws IOException
     {
-        throw new UnsupportedOperationException(  );
+        throw new UnsupportedOperationException( );
     }
 
     /**
      * {@inheritDoc}
      */
-    public String getName(  )
+    public String getName( )
     {
         return _strName;
     }
@@ -123,15 +128,15 @@ public class MemoryFileItem implements FileItem
     /**
      * {@inheritDoc}
      */
-    public OutputStream getOutputStream(  ) throws IOException
+    public OutputStream getOutputStream( ) throws IOException
     {
-        throw new UnsupportedOperationException(  );
+        throw new UnsupportedOperationException( );
     }
 
     /**
      * {@inheritDoc}
      */
-    public long getSize(  )
+    public long getSize( )
     {
         return _lSize;
     }
@@ -139,9 +144,9 @@ public class MemoryFileItem implements FileItem
     /**
      * {@inheritDoc}
      */
-    public String getString(  )
+    public String getString( )
     {
-        return new String( get(  ) );
+        return new String( get( ) );
     }
 
     /**
@@ -149,13 +154,13 @@ public class MemoryFileItem implements FileItem
      */
     public String getString( String strEncoding ) throws UnsupportedEncodingException
     {
-        return new String( get(  ), strEncoding );
+        return new String( get( ), strEncoding );
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean isFormField(  )
+    public boolean isFormField( )
     {
         return false;
     }
@@ -163,7 +168,7 @@ public class MemoryFileItem implements FileItem
     /**
      * {@inheritDoc}
      */
-    public boolean isInMemory(  )
+    public boolean isInMemory( )
     {
         return true;
     }
@@ -189,14 +194,16 @@ public class MemoryFileItem implements FileItem
      */
     public void write( File file ) throws Exception
     {
-        throw new UnsupportedOperationException(  );
+        throw new UnsupportedOperationException( );
     }
 
-    public FileItemHeaders getHeaders() {
-        throw new UnsupportedOperationException(  );
+    public FileItemHeaders getHeaders( )
+    {
+        throw new UnsupportedOperationException( );
     }
 
-    public void setHeaders(FileItemHeaders headers) {
-        throw new UnsupportedOperationException(  );
+    public void setHeaders( FileItemHeaders headers )
+    {
+        throw new UnsupportedOperationException( );
     }
 }
