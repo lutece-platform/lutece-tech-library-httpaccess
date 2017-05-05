@@ -40,7 +40,6 @@ import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
@@ -359,12 +358,7 @@ public class HttpAccess
         {
             HttpClient client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
-
-            if ( !_responseValidator.validate( nResponse ) )
-            {
-                String strError = "HttpAccess - Error Posting URL : " + strUrl + " - return code : " + nResponse;
-                throw new HttpAccessException( strError, nResponse, null );
-            }
+            validateResponseStatus( nResponse, method, strUrl );
 
             if ( headersResponse != null )
             {
@@ -464,12 +458,7 @@ public class HttpAccess
         {
             HttpClient client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
-
-            if ( !_responseValidator.validate( nResponse ) )
-            {
-                String strError = "HttpAccess - Error Posting URL : " + strUrl + " - return code : " + nResponse;
-                throw new HttpAccessException( strError, nResponse, null );
-            }
+            validateResponseStatus( nResponse, method, strUrl );
 
             if ( headersResponse != null )
             {
@@ -1295,7 +1284,7 @@ public class HttpAccess
         if ( !_responseValidator.validate( nResponseStatus ) )
         {
             String strError = "HttpAccess - Error executing method " + method.getName( ) + " at URL : " + strUrl + " - return code : " + nResponseStatus;
-            throw new HttpAccessException( strError, nResponseStatus, null );
+            throw new InvalidResponseStatus( strError, nResponseStatus, null );
         }
 
     }

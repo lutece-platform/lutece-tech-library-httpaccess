@@ -75,10 +75,12 @@ public class HttpAccessException extends Exception
     }
 
     /**
+     * @deprecated Use InvalidResponseStatus:getResponseStatus instead
      * Gets the response code.
      *
      * @return the http response code associated to the Exception
      */
+    @Deprecated
     public Integer getResponseCode( )
     {
         return _nResponseCode;
