@@ -67,6 +67,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.httpclient.HttpMethod;
@@ -1284,6 +1286,18 @@ public class HttpAccess
         if ( !_responseValidator.validate( nResponseStatus ) )
         {
             String strError = "HttpAccess - Error executing method " + method.getName( ) + " at URL : " + strUrl + " - return code : " + nResponseStatus;
+            String strResponseBody;
+            try
+            {
+                strResponseBody = " Response Body : \n" + method.getResponseBodyAsString();
+                
+            }
+            catch (IOException ex)
+            {
+                strResponseBody = " unable to get Response Body.";
+            }
+            strError += strResponseBody;
+            
             throw new InvalidResponseStatus( strError, nResponseStatus, null );
         }
 
