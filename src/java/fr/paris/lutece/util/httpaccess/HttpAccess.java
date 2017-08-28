@@ -220,9 +220,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
 
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
@@ -244,7 +245,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -356,9 +357,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
 
@@ -379,7 +381,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -456,9 +458,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
 
@@ -479,7 +482,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -657,9 +660,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
 
             validateResponseStatus( nResponse, method, strUrl );
@@ -672,7 +676,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -719,9 +723,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
             strResponseBody = method.getResponseBodyAsString( );
@@ -733,7 +738,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -891,9 +896,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
             if ( headersResponse != null )
@@ -913,7 +919,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -971,9 +977,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
 
@@ -994,7 +1001,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -1037,9 +1044,10 @@ public class HttpAccess
             authenticator.authenticateRequest( method, listElements );
         }
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
 
             validateResponseStatus( nResponse, method, strUrl );
@@ -1061,7 +1069,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strResponseBody;
@@ -1084,9 +1092,10 @@ public class HttpAccess
         BufferedInputStream bis = null;
         BufferedOutputStream bos = null;
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
             bis = new BufferedInputStream( method.getResponseBodyAsStream( ) );
@@ -1125,7 +1134,7 @@ public class HttpAccess
             }
 
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
     }
 
@@ -1144,9 +1153,10 @@ public class HttpAccess
         HttpMethodBase method = new GetMethod( strUrl );
         method.setFollowRedirects( true );
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
             Header headerContentDisposition = method.getResponseHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
@@ -1177,7 +1187,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return strFileName;
@@ -1199,9 +1209,10 @@ public class HttpAccess
 
         MemoryFileItem fileItem = null;
 
+        HttpClient client = null;
         try
         {
-            HttpClient client = _accessService.getHttpClient( method );
+            client = _accessService.getHttpClient( method );
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
 
@@ -1265,7 +1276,7 @@ public class HttpAccess
         finally
         {
             // Release the connection.
-            method.releaseConnection( );
+            _accessService.releaseConnection( client, method );
         }
 
         return fileItem;

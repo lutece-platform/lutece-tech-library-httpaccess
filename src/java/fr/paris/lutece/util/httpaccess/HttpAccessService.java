@@ -412,4 +412,26 @@ public class HttpAccessService implements ResponseStatusValidator
     {
         return _responseValidator.validate( nStatus );
     }
+
+    /**
+     * Releases the connection.
+     *
+     * Call this method instead of releaseConnection on method because this ensures the connection
+     * is closed when we are not pooling connection. See https://issues.apache.org/jira/browse/HTTPCLIENT-572
+     * or https://doc.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections for an explanation.
+     * In a few words, the default http client (new HttpClient()) doesn't close the connection in an attempt
+     * to reuse it if we do another request to the same host.
+     *
+     * @param client
+     *            The client
+     * @param method
+     *            The method
+     */
+    public void releaseConnection( HttpClient client, HttpMethodBase method )
+    {
+        method.releaseConnection( );
+        if ( client != null && !_bConnectionPoolEnabled ) {
+            client.getHttpConnectionManager().closeIdleConnections( 0 );
+        }
+    }
 }
