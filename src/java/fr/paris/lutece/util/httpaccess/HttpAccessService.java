@@ -214,6 +214,7 @@ public class HttpAccessService implements ResponseStatusValidator
                 }
 
                 client = new HttpClient( connectionManager );
+                _multiThreadHttpClient = client;
             }
         }
         else
