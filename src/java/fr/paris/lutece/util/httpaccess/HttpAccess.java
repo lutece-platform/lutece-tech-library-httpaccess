@@ -861,7 +861,29 @@ public class HttpAccess
                     try
                     {
                         fileItem.write( file );
-                        parts.add( new FilePart( paramFileItem.getKey( ), file ) );
+                        String strContentType = null;
+                        String strCharset = null;
+                        if ( StringUtils.isNotBlank( fileItem.getContentType( ) ) )
+                        {
+                            String [ ] splitContentType = StringUtils.split( fileItem.getContentType( ), SEPARATOR_CONTENT_TYPE );
+                            if ( splitContentType.length > 0 && StringUtils.isNotBlank( splitContentType [0] ) )
+                            {
+                                strContentType = splitContentType [0];
+                            }
+                            if ( splitContentType.length > 1 && StringUtils.isNotBlank( splitContentType [1] ) )
+                            {
+                                strCharset = splitContentType [1];
+                            }
+                        }
+                        FilePart part = new FilePart( paramFileItem.getKey( ), file, strContentType, strCharset );
+                        if ( strContentType != null && strCharset == null )
+                        {
+                            // Commons httpclient in the constructor of FilePart replaces null by ISO-8859-1
+                            // Undo this explicitly when strCharset is null because we don't want to send
+                            // things like "Content-Type: image/jpeg ; charset=ISO-8859-1"
+                            part.setCharSet( null );
+                        }
+                        parts.add( part );
                     }
                     catch( Exception e )
                     {
