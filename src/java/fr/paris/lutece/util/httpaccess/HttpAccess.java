@@ -859,12 +859,12 @@ public class HttpAccess
 
                     if ( fileItem != null )
                     {
-                        File file = new File( fileItem.getName( ) );
-                        // Store files for deletion after the request completed
-                        listFiles.add( file );
-
                         try
                         {
+                            File file = File.createTempFile( "httpaccess-multipart-", null );
+                            // Store files for deletion after the request completed
+                            listFiles.add( file );
+
                             fileItem.write( file );
                             String strContentType = null;
                             String strCharset = null;
@@ -880,7 +880,7 @@ public class HttpAccess
                                     strCharset = splitContentType [1];
                                 }
                             }
-                            FilePart part = new FilePart( paramFileItem.getKey( ), file, strContentType, strCharset );
+                            FilePart part = new FilePart( paramFileItem.getKey( ), fileItem.getName( ), file, strContentType, strCharset );
                             if ( strContentType != null && strCharset == null )
                             {
                                 // Commons httpclient in the constructor of FilePart replaces null by ISO-8859-1
