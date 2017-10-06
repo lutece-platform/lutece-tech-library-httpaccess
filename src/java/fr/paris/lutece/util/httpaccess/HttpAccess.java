@@ -49,9 +49,12 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.ByteArrayPartSource;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.FilePartSource;
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.commons.httpclient.methods.multipart.PartSource;
 import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.httpclient.util.EncodingUtil;
 import org.apache.commons.lang.StringUtils;
@@ -861,11 +864,6 @@ public class HttpAccess
                     {
                         try
                         {
-                            File file = File.createTempFile( "httpaccess-multipart-", null );
-                            // Store files for deletion after the request completed
-                            listFiles.add( file );
-
-                            fileItem.write( file );
                             String strContentType = null;
                             String strCharset = null;
                             if ( StringUtils.isNotBlank( fileItem.getContentType( ) ) )
@@ -880,7 +878,22 @@ public class HttpAccess
                                     strCharset = splitContentType [1];
                                 }
                             }
-                            FilePart part = new FilePart( paramFileItem.getKey( ), fileItem.getName( ), file, strContentType, strCharset );
+
+                            PartSource partSource;
+                            if ( fileItem.isInMemory( ) )
+                            {
+                                partSource = new ByteArrayPartSource( fileItem.getName( ), fileItem.get( ) );
+                            }
+                            else
+                            {
+                                File file = File.createTempFile( "httpaccess-multipart-", null );
+                                // Store files for deletion after the request completed
+                                listFiles.add( file );
+                                fileItem.write( file );
+                                partSource = new FilePartSource( fileItem.getName( ), file );
+                            }
+
+                            FilePart part = new FilePart( paramFileItem.getKey( ), partSource, strContentType, strCharset );
                             if ( strContentType != null && strCharset == null )
                             {
                                 // Commons httpclient in the constructor of FilePart replaces null by ISO-8859-1
