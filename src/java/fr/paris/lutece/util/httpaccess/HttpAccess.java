@@ -846,102 +846,120 @@ public class HttpAccess
         }
 
         ArrayList<Part> parts = new ArrayList<Part>( );
+        ArrayList<File> listFiles = new ArrayList<File>( );
 
-        if ( ( fileItems != null ) && !fileItems.isEmpty( ) )
-        {
-            // Store the Files
-            for ( Entry<String, FileItem> paramFileItem : fileItems.entrySet( ) )
-            {
-                FileItem fileItem = paramFileItem.getValue( );
-
-                if ( fileItem != null )
-                {
-                    File file = new File( fileItem.getName( ) );
-
-                    try
-                    {
-                        fileItem.write( file );
-                        String strContentType = null;
-                        String strCharset = null;
-                        if ( StringUtils.isNotBlank( fileItem.getContentType( ) ) )
-                        {
-                            String [ ] splitContentType = StringUtils.split( fileItem.getContentType( ), SEPARATOR_CONTENT_TYPE );
-                            if ( splitContentType.length > 0 && StringUtils.isNotBlank( splitContentType [0] ) )
-                            {
-                                strContentType = splitContentType [0];
-                            }
-                            if ( splitContentType.length > 1 && StringUtils.isNotBlank( splitContentType [1] ) )
-                            {
-                                strCharset = splitContentType [1];
-                            }
-                        }
-                        FilePart part = new FilePart( paramFileItem.getKey( ), file, strContentType, strCharset );
-                        if ( strContentType != null && strCharset == null )
-                        {
-                            // Commons httpclient in the constructor of FilePart replaces null by ISO-8859-1
-                            // Undo this explicitly when strCharset is null because we don't want to send
-                            // things like "Content-Type: image/jpeg ; charset=ISO-8859-1"
-                            part.setCharSet( null );
-                        }
-                        parts.add( part );
-                    }
-                    catch( Exception e )
-                    {
-                        String strError = "HttpAccess - Error writing file '" + fileItem.getName( ) + "' : ";
-                        AppLogService.error( strError + e.getMessage( ), e );
-                        throw new HttpAccessException( strError + e.getMessage( ), e );
-                    }
-                }
-            }
-        }
-
-        if ( ( params != null ) && !params.isEmpty( ) )
-        {
-            String charset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET );
-            // Additionnal parameters
-            for ( Entry<String, List<String>> param : params.entrySet( ) )
-            {
-                for ( String strValue : param.getValue( ) )
-                {
-                    parts.add( new StringPart( param.getKey( ), strValue, charset ) );
-                }
-            }
-        }
-
-        if ( !parts.isEmpty( ) )
-        {
-            method.setRequestEntity( new MultipartRequestEntity( parts.toArray( new Part [ ] { } ), method.getParams( ) ) );
-        }
-
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
-
-        HttpClient client = null;
         try
         {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
-            if ( headersResponse != null )
+            if ( ( fileItems != null ) && !fileItems.isEmpty( ) )
             {
-                for ( Header header : method.getResponseHeaders( ) )
+                // Store the Files
+                for ( Entry<String, FileItem> paramFileItem : fileItems.entrySet( ) )
                 {
-                    headersResponse.put( header.getName( ), header.getValue( ) );
+                    FileItem fileItem = paramFileItem.getValue( );
+
+                    if ( fileItem != null )
+                    {
+                        File file = new File( fileItem.getName( ) );
+                        // Store files for deletion after the request completed
+                        listFiles.add( file );
+
+                        try
+                        {
+                            fileItem.write( file );
+                            String strContentType = null;
+                            String strCharset = null;
+                            if ( StringUtils.isNotBlank( fileItem.getContentType( ) ) )
+                            {
+                                String [ ] splitContentType = StringUtils.split( fileItem.getContentType( ), SEPARATOR_CONTENT_TYPE );
+                                if ( splitContentType.length > 0 && StringUtils.isNotBlank( splitContentType [0] ) )
+                                {
+                                    strContentType = splitContentType [0];
+                                }
+                                if ( splitContentType.length > 1 && StringUtils.isNotBlank( splitContentType [1] ) )
+                                {
+                                    strCharset = splitContentType [1];
+                                }
+                            }
+                            FilePart part = new FilePart( paramFileItem.getKey( ), file, strContentType, strCharset );
+                            if ( strContentType != null && strCharset == null )
+                            {
+                                // Commons httpclient in the constructor of FilePart replaces null by ISO-8859-1
+                                // Undo this explicitly when strCharset is null because we don't want to send
+                                // things like "Content-Type: image/jpeg ; charset=ISO-8859-1"
+                                part.setCharSet( null );
+                            }
+                            parts.add( part );
+                        }
+                        catch( Exception e )
+                        {
+                            String strError = "HttpAccess - Error writing file '" + fileItem.getName( ) + "' : ";
+                            AppLogService.error( strError + e.getMessage( ), e );
+                            throw new HttpAccessException( strError + e.getMessage( ), e );
+                        }
+                    }
                 }
             }
 
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
+            if ( ( params != null ) && !params.isEmpty( ) )
+            {
+                String charset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET );
+                // Additionnal parameters
+                for ( Entry<String, List<String>> param : params.entrySet( ) )
+                {
+                    for ( String strValue : param.getValue( ) )
+                    {
+                        parts.add( new StringPart( param.getKey( ), strValue, charset ) );
+                    }
+                }
+            }
+
+            if ( !parts.isEmpty( ) )
+            {
+                method.setRequestEntity( new MultipartRequestEntity( parts.toArray( new Part [ ] { } ), method.getParams( ) ) );
+            }
+
+            if ( authenticator != null )
+            {
+                authenticator.authenticateRequest( method, listElements );
+            }
+
+            HttpClient client = null;
+            try
+            {
+                client = _accessService.getHttpClient( method );
+                int nResponse = client.executeMethod( method );
+                validateResponseStatus( nResponse, method, strUrl );
+                if ( headersResponse != null )
+                {
+                    for ( Header header : method.getResponseHeaders( ) )
+                    {
+                        headersResponse.put( header.getName( ), header.getValue( ) );
+                    }
+                }
+
+                strResponseBody = method.getResponseBodyAsString( );
+            }
+            catch( IOException e )
+            {
+                throwHttpAccessException( strUrl, e );
+            }
+            finally
+            {
+                // Release the connection.
+                _accessService.releaseConnection( client, method );
+            }
         }
         finally
         {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
+            // Delete temporary files
+            for ( File file : listFiles )
+            {
+                boolean deleted = file.delete( );
+                if ( !deleted )
+                {
+                    AppLogService.error( "HttpAccess - Non fatal error: could not delete httpaccess temporary file: " + file.getAbsolutePath( ) );
+                }
+            }
         }
 
         return strResponseBody;
