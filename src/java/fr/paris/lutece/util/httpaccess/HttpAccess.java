@@ -130,6 +130,7 @@ public class HttpAccess
 
     public HttpAccess( ResponseStatusValidator validator )
     {
+        _accessService = HttpAccessService.getInstance( );
         _responseValidator = validator;
     }
 
