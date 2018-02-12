@@ -33,13 +33,24 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import fr.paris.lutece.portal.service.util.AppLogService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
-import fr.paris.lutece.util.signrequest.RequestAuthenticator;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
@@ -59,22 +70,9 @@ import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.httpclient.util.EncodingUtil;
 import org.apache.commons.lang.StringUtils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import org.apache.commons.httpclient.HttpMethod;
+import fr.paris.lutece.portal.service.util.AppLogService;
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
 /**
  * Http net Object Accessor
@@ -581,8 +579,7 @@ public class HttpAccess
      * @throws HttpAccessException
      *             the http access exception
      */
-    public String doPutJSON( String strUrl, String strJSON, Map<String, String> headersRequest, Map<String, String> headersResponse )
-            throws HttpAccessException
+    public String doPutJSON( String strUrl, String strJSON, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
         return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE, JSON_CHARSET, null, null, headersRequest,
                 headersResponse );
@@ -1014,8 +1011,8 @@ public class HttpAccess
                 putParameters [nCpt++] = new NameValuePair( entry.getKey( ), entry.getValue( ) );
             }
 
-            method.setRequestEntity( new ByteArrayRequestEntity( EncodingUtil.formUrlEncode( putParameters,
-                    AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET ) ).getBytes( ) ) );
+            method.setRequestEntity( new ByteArrayRequestEntity(
+                    EncodingUtil.formUrlEncode( putParameters, AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET ) ).getBytes( ) ) );
         }
 
         if ( headersRequest != null )
@@ -1141,10 +1138,50 @@ public class HttpAccess
      */
     public void downloadFile( String strUrl, String strFilePath ) throws HttpAccessException
     {
+        BufferedOutputStream bos = null;
+
+        try
+        {
+            FileOutputStream fos = new FileOutputStream( strFilePath );
+            bos = new BufferedOutputStream( fos );
+            downloadFile( strUrl, bos );
+
+        }
+        catch( IOException e )
+        {
+            throwHttpAccessException( strUrl, e );
+        }
+        finally
+        {
+            try
+            {
+                if ( bos != null )
+                {
+                    bos.close( );
+                }
+            }
+            catch( IOException e )
+            {
+                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
+                throw new HttpAccessException( e.getMessage( ), e );
+            }
+
+        }
+    }
+
+    /**
+     * Send a GET HTTP request to an Url and return the response content in the ouput stream.
+     * 
+     * @param strUrl The Url to access
+     * @param outputStream write in the outpustrean the contents of the file 
+     * @throws HttpAccessException
+     *             if there is a problem to access to the given Url
+     */
+    public void downloadFile( String strUrl, OutputStream outputStream ) throws HttpAccessException
+    {
         HttpMethodBase method = new GetMethod( strUrl );
         method.setFollowRedirects( true );
         BufferedInputStream bis = null;
-        BufferedOutputStream bos = null;
 
         HttpClient client = null;
         try
@@ -1153,14 +1190,13 @@ public class HttpAccess
             int nResponse = client.executeMethod( method );
             validateResponseStatus( nResponse, method, strUrl );
             bis = new BufferedInputStream( method.getResponseBodyAsStream( ) );
-            FileOutputStream fos = new FileOutputStream( strFilePath );
-            bos = new BufferedOutputStream( fos );
 
-            int bytes;
+            byte [ ] buffer = new byte [ 8 * 1024];
+            int bytesRead;
 
-            while ( ( bytes = bis.read( ) ) > -1 )
+            while ( ( bytesRead = bis.read( buffer ) ) != -1 )
             {
-                bos.write( bytes );
+                outputStream.write( buffer, 0, bytesRead );
             }
         }
         catch( IOException e )
@@ -1176,10 +1212,6 @@ public class HttpAccess
                     bis.close( );
                 }
 
-                if ( bos != null )
-                {
-                    bos.close( );
-                }
             }
             catch( IOException e )
             {
@@ -1354,15 +1386,15 @@ public class HttpAccess
             String strResponseBody;
             try
             {
-                strResponseBody = " Response Body : \n" + method.getResponseBodyAsString();
-                
+                strResponseBody = " Response Body : \n" + method.getResponseBodyAsString( );
+
             }
-            catch (IOException ex)
+            catch( IOException ex )
             {
                 strResponseBody = " unable to get Response Body.";
             }
             strError += strResponseBody;
-            
+
             throw new InvalidResponseStatus( strError, nResponseStatus, null );
         }
 
