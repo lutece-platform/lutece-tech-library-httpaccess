@@ -114,6 +114,8 @@ public class HttpAccessService implements ResponseStatusValidator
 
     /** The _multi thread http client. */
     private static HttpClient _multiThreadHttpClient;
+    private static HttpClient _multiThreadHttpClientNoProxy;
+    private static MultiThreadedHttpConnectionManager _connectionManager;
 
     /** The _str proxy host. */
     private String _strProxyHost;
@@ -193,15 +195,35 @@ public class HttpAccessService implements ResponseStatusValidator
     {
         HttpClient client;
 
+        //bNoProxy will be true when we would normally be using a proxy but matched on the NoProxyFor list
+        boolean bNoProxy = false;
+
+        if ( StringUtils.isNotBlank( _strProxyHost ) )
+        {
+            try
+            {
+                bNoProxy = ( StringUtils.isNotBlank( _strNoProxyFor ) && matchesList( _strNoProxyFor.split( SEPARATOR ), method.getURI( ).getHost( ) ) );
+            }
+            catch( URIException e )
+            {
+                AppLogService.error( e.getMessage( ), e );
+            }
+        }
+
         if ( _bConnectionPoolEnabled )
         {
-            if ( _multiThreadHttpClient != null )
+            HttpClient multiThreadHttpClient = bNoProxy ? _multiThreadHttpClientNoProxy : _multiThreadHttpClient;
+            if ( multiThreadHttpClient != null )
             {
-                return _multiThreadHttpClient;
+                return multiThreadHttpClient;
             }
             else
             {
-                MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager( );
+                if ( _connectionManager == null )
+                {
+                    _connectionManager = new MultiThreadedHttpConnectionManager( );
+                }
+                MultiThreadedHttpConnectionManager connectionManager = _connectionManager;
 
                 if ( StringUtils.isEmpty( _strConnectionPoolMaxConnectionPerHost ) )
                 {
@@ -214,7 +236,14 @@ public class HttpAccessService implements ResponseStatusValidator
                 }
 
                 client = new HttpClient( connectionManager );
-                _multiThreadHttpClient = client;
+                if ( bNoProxy )
+                {
+                    _multiThreadHttpClientNoProxy = client;
+                }
+                else
+                {
+                    _multiThreadHttpClient = client;
+                }
             }
         }
         else
@@ -222,22 +251,11 @@ public class HttpAccessService implements ResponseStatusValidator
             client = new HttpClient( );
         }
 
-        boolean bNoProxy = false;
-
         // Create an instance of HttpClient.
 
         // If proxy host and port found, set the correponding elements
         if ( StringUtils.isNotBlank( _strProxyHost ) && StringUtils.isNotBlank( _strProxyPort ) && StringUtils.isNumeric( _strProxyPort ) )
         {
-            try
-            {
-                bNoProxy = ( StringUtils.isNotBlank( _strNoProxyFor ) && matchesList( _strNoProxyFor.split( SEPARATOR ), method.getURI( ).getHost( ) ) );
-            }
-            catch( URIException e )
-            {
-                AppLogService.error( e.getMessage( ), e );
-            }
-
             if ( !bNoProxy )
             {
                 client.getHostConfiguration( ).setProxy( _strProxyHost, Integer.parseInt( _strProxyPort ) );
