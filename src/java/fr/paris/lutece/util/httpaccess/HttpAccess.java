@@ -1384,7 +1384,7 @@ public class HttpAccess
     {
         if ( !_responseValidator.validate( nResponseStatus ) )
         {
-            String strError = "HttpAccess - Error executing method " + method.getName( ) + " at URL : " + strUrl + " - return code : " + nResponseStatus;
+            String strError = "HttpAccess - Error executing method " + method.getName( ) + " at URL : " + stripPassword( strUrl ) + " - return code : " + nResponseStatus;
             String strResponseBody;
             try
             {
@@ -1414,8 +1414,26 @@ public class HttpAccess
      */
     private void throwHttpAccessException( String strUrl, Exception exception ) throws HttpAccessException
     {
-        String strError = "HttpAccess - Error URL : " + strUrl + "' : ";
+        String strError = "HttpAccess - Error URL : " + stripPassword( strUrl ) + "' : ";
         AppLogService.error( strError + exception.getMessage( ), exception );
         throw new HttpAccessException( strError + exception.getMessage( ), exception );
+    }
+
+    /**
+     * Hide end of url if the keyword "password" appears in parameters
+     *
+     * @param strUrl
+     * @return the url stripped
+     */
+    private String stripPassword( String strUrl )
+    {
+        if ( strUrl != null && strUrl.indexOf( "?" ) > 0 && strUrl.toLowerCase( ).indexOf( "password", strUrl.indexOf( "?" ) ) > 0 )
+        {
+            return strUrl.substring( 0, strUrl.toLowerCase( ).indexOf( "password", strUrl.indexOf( "?" ) ) ) + "***" ;
+        }
+        else
+        {
+            return strUrl;
+        }
     }
 }
