@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2015, Mairie de Paris
+ * Copyright (c) 2002-2021, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@
  * License 1.0
  */
 
-
 package fr.paris.lutece.util.httpaccess;
 
 /**
@@ -41,23 +40,29 @@ package fr.paris.lutece.util.httpaccess;
 public class InvalidResponseStatus extends HttpAccessException
 {
     private int _nResponseStatus;
+
     /**
      * Constructor
-     * @param strMessage The message
-     * @param nResponseStatus The response status
-     * @param e The exception
+     * 
+     * @param strMessage
+     *            The message
+     * @param nResponseStatus
+     *            The response status
+     * @param e
+     *            The exception
      */
     public InvalidResponseStatus( String strMessage, Integer nResponseStatus, Exception e )
     {
         super( strMessage, nResponseStatus, e );
         _nResponseStatus = nResponseStatus;
     }
-    
+
     /**
      * Return the invalid response status
+     * 
      * @return the invalid response status
      */
-    public int getResponseStatus()
+    public int getResponseStatus( )
     {
         return _nResponseStatus;
     }

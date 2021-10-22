@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2017, Mairie de Paris
+ * Copyright (c) 2002-2021, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1172,8 +1172,10 @@ public class HttpAccess
     /**
      * Send a GET HTTP request to an Url and return the response content in the ouput stream.
      * 
-     * @param strUrl The Url to access
-     * @param outputStream write in the outpustrean the contents of the file 
+     * @param strUrl
+     *            The Url to access
+     * @param outputStream
+     *            write in the outpustrean the contents of the file
      * @throws HttpAccessException
      *             if there is a problem to access to the given Url
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2017, Mairie de Paris
+ * Copyright (c) 2002-2021, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,8 +75,7 @@ public class HttpAccessException extends Exception
     }
 
     /**
-     * @deprecated Use InvalidResponseStatus:getResponseStatus instead
-     * Gets the response code.
+     * @deprecated Use InvalidResponseStatus:getResponseStatus instead Gets the response code.
      *
      * @return the http response code associated to the Exception
      */
