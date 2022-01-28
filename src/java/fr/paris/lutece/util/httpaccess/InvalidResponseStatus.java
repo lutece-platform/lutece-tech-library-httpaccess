@@ -39,6 +39,10 @@ package fr.paris.lutece.util.httpaccess;
  */
 public class InvalidResponseStatus extends HttpAccessException
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -5494783620790018043L;
     private int _nResponseStatus;
 
     /**
