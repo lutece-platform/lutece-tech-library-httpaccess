@@ -33,14 +33,16 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,30 +50,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.ByteArrayPartSource;
-import org.apache.commons.httpclient.methods.multipart.FilePart;
-import org.apache.commons.httpclient.methods.multipart.FilePartSource;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
-import org.apache.commons.httpclient.methods.multipart.PartSource;
-import org.apache.commons.httpclient.methods.multipart.StringPart;
-import org.apache.commons.httpclient.util.EncodingUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.ProtocolException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
 
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import fr.paris.lutece.util.signrequest.AuthenticateRequestInformations;
 import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
 /**
@@ -204,53 +206,64 @@ public class HttpAccess
     public String doGet( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-        String strResponseBody = StringUtils.EMPTY;
+		String strResponseBody = StringUtils.EMPTY;
 
-        HttpMethodBase method = new GetMethod( strUrl );
-        method.setFollowRedirects( true );
+		HttpGet httpGet = new HttpGet(strUrl);
 
-        if ( headersRequest != null )
-        {
-            for ( Entry<String, String> entry : headersRequest.entrySet( ) )
-            {
-                method.setRequestHeader( entry.getKey( ), entry.getValue( ) );
-            }
-        }
+		// HttpMethodBase method = new GetMethod( strUrl );
+		// method.setFollowRedirects( true );
 
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
+		if (headersRequest != null) {
+			headersRequest.forEach((k, v) -> httpGet.addHeader(k, v));
+		}
+		if (authenticator != null) {
+			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
+			// Add Security Parameters in the request
+			if (!securityInformations.getSecurityParameteres().isEmpty()) {
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
+				List<NameValuePair> nvps = new ArrayList<>();
 
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
+				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+				// Add to the request URL
+				try {
+					URI uri = new URIBuilder(new URI(strUrl)).addParameters(nvps).build();
+					httpGet.setUri(uri);
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				}
 
-            if ( headersResponse != null )
-            {
-                for ( Header header : method.getResponseHeaders( ) )
-                {
-                    headersResponse.put( header.getName( ), header.getValue( ) );
-                }
-            }
+			}
+			// Add Headers in the request
+			if (!securityInformations.getSecurityHeaders().isEmpty()) {
 
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
+				securityInformations.getSecurityHeaders().forEach((k, v) -> httpGet.addHeader(k, v));
+			}
 
-        return strResponseBody;
+		}
+
+		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
+
+				if (headersResponse != null && response.getHeaders() != null) {
+
+					Arrays.asList(response.getHeaders()).stream()
+							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
+
+				}
+				HttpEntity entity = response.getEntity();
+				strResponseBody = EntityUtils.toString(entity);
+			}
+
+		}
+
+		catch (IOException | ParseException | URISyntaxException e) {
+			throwHttpAccessException(strUrl, e);
+		}
+
+		return strResponseBody;
     }
 
     /**
@@ -335,56 +348,62 @@ public class HttpAccess
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
         String strResponseBody = StringUtils.EMPTY;
+        
 
-        PostMethod method = new PostMethod( strUrl );
+        HttpPost httpPost = new HttpPost(strUrl);
+     
+        
+    	List<NameValuePair> nvps = new ArrayList<>();
+        
 
-        if ( params != null )
-        {
-            for ( Entry<String, String> entry : params.entrySet( ) )
-            {
-                method.addParameter( entry.getKey( ), entry.getValue( ) );
-            }
-        }
+		if (headersRequest != null) {
+			headersRequest.forEach((k, v) -> httpPost.addHeader(k, v));
+		}
+	
+		
+		 if ( params != null ){
+			 	params.forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+	        }
 
-        if ( headersRequest != null )
-        {
-            for ( Entry<String, String> entry : headersRequest.entrySet( ) )
-            {
-                method.setRequestHeader( entry.getKey( ), entry.getValue( ) );
-            }
-        }
+		
+		if (authenticator != null) {
+			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
+	
+			if (!securityInformations.getSecurityParameteres().isEmpty()) {
+               //Add security parameter
+				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+				
+			}
+			// Add Security Headers in the request
+			if (!securityInformations.getSecurityHeaders().isEmpty()) {
 
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
+				securityInformations.getSecurityHeaders().forEach((k, v) -> httpPost.addHeader(k, v));
+			}
+		}
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
 
-            if ( headersResponse != null )
-            {
-                for ( Header header : method.getResponseHeaders( ) )
-                {
-                    headersResponse.put( header.getName( ), header.getValue( ) );
-                }
-            }
+		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPost.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
 
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpPost.getMethod(), response, strUrl);
+
+				if (headersResponse != null && response.getHeaders() != null) {
+
+					Arrays.asList(response.getHeaders()).stream()
+							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
+
+				}
+				HttpEntity entity = response.getEntity();
+				strResponseBody = EntityUtils.toString(entity);
+			}
+
+		}
+
+		catch (IOException | ParseException | URISyntaxException e) {
+			throwHttpAccessException(strUrl, e);
+		}
 
         return strResponseBody;
     }
@@ -419,73 +438,83 @@ public class HttpAccess
             throws HttpAccessException
     {
         String strResponseBody = StringUtils.EMPTY;
-
-        EntityEnclosingMethod method;
+        HttpUriRequestBase httpRequest;
 
         switch( strMethod )
         {
             case PROPERTY_HTTP_REQUEST_PUT:
-                method = new PutMethod( strUrl );
+            
+            	
+            	httpRequest=new HttpPut(strUrl);
+            	
+                 
                 break;
 
             case PROPERTY_HTTP_REQUEST_POST:
-                method = new PostMethod( strUrl );
+            	httpRequest = new HttpPost(strUrl);
                 break;
 
             default:
-                method = new PostMethod( strUrl );
+            	httpRequest =  new HttpPost(strUrl);
                 break;
         }
+       
 
-        try
-        {
-            StringRequestEntity requestEntity = new StringRequestEntity( strContent, contentType, charset );
-            method.setRequestEntity( requestEntity );
-        }
-        catch( UnsupportedEncodingException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
+        
+        if (headersRequest != null) {
+			headersRequest.forEach((k, v) -> httpRequest.addHeader(k, v));
+		}
+		if (authenticator != null) {
+			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
+			// Add Security Parameters in the request
+			if (!securityInformations.getSecurityParameteres().isEmpty()) {
 
-        if ( headersRequest != null )
-        {
-            for ( Entry<String, String> entry : headersRequest.entrySet( ) )
-            {
-                method.setRequestHeader( entry.getKey( ), entry.getValue( ) );
-            }
-        }
+				List<NameValuePair> nvps = new ArrayList<>();
 
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
+				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+				// Add to the request URL
+				try {
+					URI uri = new URIBuilder(new URI(strUrl)).addParameters(nvps).build();
+					httpRequest.setUri(uri);
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				}
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
+			}
+			// Add Headers in the request
+			if (!securityInformations.getSecurityHeaders().isEmpty()) {
 
-            if ( headersResponse != null )
-            {
-                for ( Header header : method.getResponseHeaders( ) )
-                {
-                    headersResponse.put( header.getName( ), header.getValue( ) );
-                }
-            }
+				securityInformations.getSecurityHeaders().forEach((k, v) -> httpRequest.addHeader(k, v));
+			}
 
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
+		}
+
+		   httpRequest.setEntity(new StringEntity(strResponseBody, ContentType.APPLICATION_JSON, charset, false));
+		     
+        
+        
+			try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost())) {
+				try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
+
+					int nResponse = response.getCode();
+					validateResponseStatus(nResponse, httpRequest.getMethod(), response, strUrl);
+
+					if (headersResponse != null && response.getHeaders() != null) {
+
+						Arrays.asList(response.getHeaders()).stream()
+								.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
+
+					}
+					HttpEntity entity = response.getEntity();
+					strResponseBody = EntityUtils.toString(entity);
+				}
+
+			}
+
+			catch (IOException | ParseException | URISyntaxException e) {
+				throwHttpAccessException(strUrl, e);
+			}
+
 
         return strResponseBody;
     }
@@ -641,46 +670,9 @@ public class HttpAccess
      */
     public String doPostMultiValues( String strUrl, Map<String, List<String>> params, RequestAuthenticator authenticator, List<String> listElements,
             Map<String, String> headersRequest ) throws HttpAccessException
-    {
-        String strResponseBody = StringUtils.EMPTY;
-        PostMethod method = new PostMethod( strUrl );
-
-        for ( Entry<String, List<String>> entry : params.entrySet( ) )
-        {
-            String strParameter = entry.getKey( );
-            List<String> values = entry.getValue( );
-
-            for ( String strValue : values )
-            {
-                method.addParameter( strParameter, strValue );
-            }
-        }
-
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
-
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-
-            validateResponseStatus( nResponse, method, strUrl );
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
-
-        return strResponseBody;
+    {  
+   
+    	return doPostMultiValues(strUrl, params, authenticator, listElements, headersRequest, null);
     }
 
     /**
@@ -705,42 +697,63 @@ public class HttpAccess
     public String doPostMultiValues( String strUrl, Map<String, List<String>> params, RequestAuthenticator authenticator, List<String> listElements,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-        String strResponseBody = StringUtils.EMPTY;
-        PostMethod method = new PostMethod( strUrl );
+    	
+    	
+    	String strResponseBody = StringUtils.EMPTY;
+        HttpPost httpPost = new HttpPost(strUrl);
+        
+        
+    	List<NameValuePair> nvps = new ArrayList<>();
+        
 
-        for ( Entry<String, List<String>> entry : params.entrySet( ) )
-        {
-            String strParameter = entry.getKey( );
-            List<String> values = entry.getValue( );
+    	if (headersRequest != null) {
+    		headersRequest.forEach((k, v) -> httpPost.addHeader(k, v));
+    	}
 
-            for ( String strValue : values )
-            {
-                method.addParameter( strParameter, strValue );
+    	
+    	 if ( params != null ){
+    		 	params.forEach((k, v) -> v.stream().forEach(y-> nvps.add(new BasicNameValuePair(k, y))));
             }
-        }
 
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
+    	
+    	if (authenticator != null) {
+    		AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
+    		if (!securityInformations.getSecurityParameteres().isEmpty()) {
+               //Add security parameter
+    			securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+    			
+    		}
+    		// Add Security Headers in the request
+    		if (!securityInformations.getSecurityHeaders().isEmpty()) {
+
+    			securityInformations.getSecurityHeaders().forEach((k, v) -> httpPost.addHeader(k, v));
+    		}
+    	}
+
+    	httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+
+    	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPost.getUri().getHost())) {
+    		try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+
+    			int nResponse = response.getCode();
+    			validateResponseStatus(nResponse, httpPost.getMethod(), response, strUrl);
+
+    			if (headersResponse != null && response.getHeaders() != null) {
+
+    				Arrays.asList(response.getHeaders()).stream()
+    						.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
+
+    			}
+    			HttpEntity entity = response.getEntity();
+    			strResponseBody = EntityUtils.toString(entity);
+    		}
+
+    	}
+
+    	catch (IOException | ParseException | URISyntaxException e) {
+    		throwHttpAccessException(strUrl, e);
+    	}
 
         return strResponseBody;
     }
@@ -836,21 +849,17 @@ public class HttpAccess
             List<String> listElements, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
         String strResponseBody = StringUtils.EMPTY;
-        PostMethod method = new PostMethod( strUrl );
+        HttpPost httpPost = new HttpPost(strUrl);
 
-        if ( headersRequest != null )
-        {
-            for ( Entry<String, String> entry : headersRequest.entrySet( ) )
-            {
-                method.setRequestHeader( entry.getKey( ), entry.getValue( ) );
-            }
-        }
+        if (headersRequest != null) {
+			headersRequest.forEach((k, v) -> httpPost.addHeader(k, v));
+		}
 
-        ArrayList<Part> parts = new ArrayList<Part>( );
         ArrayList<File> listFiles = new ArrayList<File>( );
+        
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
-        try
-        {
+       
             if ( ( fileItems != null ) && !fileItems.isEmpty( ) )
             {
                 // Store the Files
@@ -877,10 +886,12 @@ public class HttpAccess
                                 }
                             }
 
-                            PartSource partSource;
                             if ( fileItem.isInMemory( ) )
                             {
-                                partSource = new ByteArrayPartSource( fileItem.getName( ), fileItem.get( ) );
+                     
+                            	
+                            	builder.addBinaryBody(paramFileItem.getKey( ), fileItem.get( ), ContentType.DEFAULT_BINARY,fileItem.getName());
+                            	
                             }
                             else
                             {
@@ -888,18 +899,13 @@ public class HttpAccess
                                 // Store files for deletion after the request completed
                                 listFiles.add( file );
                                 fileItem.write( file );
-                                partSource = new FilePartSource( fileItem.getName( ), file );
+                                builder.addBinaryBody(paramFileItem.getKey( ), file, ContentType.DEFAULT_BINARY,fileItem.getName());
+                         
+                                
+                             
                             }
 
-                            FilePart part = new FilePart( paramFileItem.getKey( ), partSource, strContentType, strCharset );
-                            if ( strContentType != null && strCharset == null )
-                            {
-                                // Commons httpclient in the constructor of FilePart replaces null by ISO-8859-1
-                                // Undo this explicitly when strCharset is null because we don't want to send
-                                // things like "Content-Type: image/jpeg ; charset=ISO-8859-1"
-                                part.setCharSet( null );
-                            }
-                            parts.add( part );
+                          
                         }
                         catch( Exception e )
                         {
@@ -910,69 +916,58 @@ public class HttpAccess
                     }
                 }
             }
-
             if ( ( params != null ) && !params.isEmpty( ) )
             {
                 String charset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET );
                 // Additionnal parameters
-                for ( Entry<String, List<String>> param : params.entrySet( ) )
-                {
-                    for ( String strValue : param.getValue( ) )
-                    {
-                        parts.add( new StringPart( param.getKey( ), strValue, charset ) );
-                    }
-                }
+                params.forEach((k, v) -> { v.stream().forEach(  y -> { builder.addTextBody(k,y,ContentType.TEXT_PLAIN);});});
+               
             }
+            
+        	if (authenticator != null) {
+        		AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
 
-            if ( !parts.isEmpty( ) )
-            {
-                method.setRequestEntity( new MultipartRequestEntity( parts.toArray( new Part [ ] { } ), method.getParams( ) ) );
-            }
+        		if (!securityInformations.getSecurityParameteres().isEmpty()) {
+                   //Add security parameter
+        			securityInformations.getSecurityParameteres().forEach( (k, v)  -> {builder.addTextBody(k,v,ContentType.TEXT_PLAIN);});
+        			
+        		}
+        		// Add Security Headers in the request
+        		if (!securityInformations.getSecurityHeaders().isEmpty()) {
 
-            if ( authenticator != null )
-            {
-                authenticator.authenticateRequest( method, listElements );
-            }
+        			securityInformations.getSecurityHeaders().forEach((k, v) -> httpPost.addHeader(k, v));
+        		}
+        	}
+            
+            
+            
+        	HttpEntity entityForm = builder.build();
+        	httpPost.setEntity(entityForm);
+            
+        	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPost.getUri().getHost())) {
+    			try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
 
-            HttpClient client = null;
-            try
-            {
-                client = _accessService.getHttpClient( method );
-                int nResponse = client.executeMethod( method );
-                validateResponseStatus( nResponse, method, strUrl );
-                if ( headersResponse != null )
-                {
-                    for ( Header header : method.getResponseHeaders( ) )
-                    {
-                        headersResponse.put( header.getName( ), header.getValue( ) );
-                    }
-                }
+    				int nResponse = response.getCode();
+    				validateResponseStatus(nResponse, httpPost.getMethod(), response, strUrl);
 
-                strResponseBody = method.getResponseBodyAsString( );
-            }
-            catch( IOException e )
-            {
-                throwHttpAccessException( strUrl, e );
-            }
-            finally
-            {
-                // Release the connection.
-                _accessService.releaseConnection( client, method );
-            }
-        }
-        finally
-        {
-            // Delete temporary files
-            for ( File file : listFiles )
-            {
-                boolean deleted = file.delete( );
-                if ( !deleted )
-                {
-                    AppLogService.error( "HttpAccess - Non fatal error: could not delete httpaccess temporary file: " + file.getAbsolutePath( ) );
-                }
-            }
-        }
+    				if (headersResponse != null && response.getHeaders() != null) {
 
+    					Arrays.asList(response.getHeaders()).stream()
+    							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
+
+    				}
+    				HttpEntity entity = response.getEntity();
+    				strResponseBody = EntityUtils.toString(entity);
+    			}
+
+    		}
+
+    		catch (IOException | ParseException | URISyntaxException e) {
+    			throwHttpAccessException(strUrl, e);
+    		}
+
+       
+        
         return strResponseBody;
     }
 
@@ -998,62 +993,63 @@ public class HttpAccess
     public String doPut( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> params,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-        String strResponseBody = StringUtils.EMPTY;
-        PutMethod method = new PutMethod( strUrl );
+    	String strResponseBody = StringUtils.EMPTY;
+        
 
-        if ( ( params != null ) && ( params.size( ) > 0 ) )
-        {
-            NameValuePair [ ] putParameters = new NameValuePair [ params.size( )];
-            int nCpt = 0;
+        HttpPut httpPut = new HttpPut(strUrl);
+     
+        
+    	List<NameValuePair> nvps = new ArrayList<>();
+        
 
-            for ( Entry<String, String> entry : params.entrySet( ) )
-            {
-                putParameters [nCpt++] = new NameValuePair( entry.getKey( ), entry.getValue( ) );
-            }
+		if (headersRequest != null) {
+			headersRequest.forEach((k, v) -> httpPut.addHeader(k, v));
+		}
+	
+		
+		 if ( params != null ){
+			 	params.forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+	        }
 
-            method.setRequestEntity( new ByteArrayRequestEntity(
-                    EncodingUtil.formUrlEncode( putParameters, AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET ) ).getBytes( ) ) );
-        }
+		
+		if (authenticator != null) {
+			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
+	
+			if (!securityInformations.getSecurityParameteres().isEmpty()) {
+               //Add security parameter
+				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+				
+			}
+			// Add Security Headers in the request
+			if (!securityInformations.getSecurityHeaders().isEmpty()) {
 
-        if ( headersRequest != null )
-        {
-            for ( Entry<String, String> entry : headersRequest.entrySet( ) )
-            {
-                method.setRequestHeader( entry.getKey( ), entry.getValue( ) );
-            }
-        }
+				securityInformations.getSecurityHeaders().forEach((k, v) -> httpPut.addHeader(k, v));
+			}
+		}
 
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
+		httpPut.setEntity(new UrlEncodedFormEntity(nvps));
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
+		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPut.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
 
-            if ( headersResponse != null )
-            {
-                for ( Header header : method.getResponseHeaders( ) )
-                {
-                    headersResponse.put( header.getName( ), header.getValue( ) );
-                }
-            }
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpPut.getMethod(), response, strUrl);
 
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
+				if (headersResponse != null && response.getHeaders() != null) {
+
+					Arrays.asList(response.getHeaders()).stream()
+							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
+
+				}
+				HttpEntity entity = response.getEntity();
+				strResponseBody = EntityUtils.toString(entity);
+			}
+
+		}
+
+		catch (IOException | ParseException | URISyntaxException e) {
+			throwHttpAccessException(strUrl, e);
+		}
 
         return strResponseBody;
     }
@@ -1078,52 +1074,64 @@ public class HttpAccess
     public String doDelete( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-        String strResponseBody = StringUtils.EMPTY;
+    	String strResponseBody = StringUtils.EMPTY;
 
-        DeleteMethod method = new DeleteMethod( strUrl );
+		HttpDelete httpDelete = new HttpDelete(strUrl);
 
-        if ( headersRequest != null )
-        {
-            for ( Entry<String, String> entry : headersRequest.entrySet( ) )
-            {
-                method.setRequestHeader( entry.getKey( ), entry.getValue( ) );
-            }
-        }
+		// HttpMethodBase method = new GetMethod( strUrl );
+		// method.setFollowRedirects( true );
 
-        if ( authenticator != null )
-        {
-            authenticator.authenticateRequest( method, listElements );
-        }
+		if (headersRequest != null) {
+			headersRequest.forEach((k, v) -> httpDelete.addHeader(k, v));
+		}
+		if (authenticator != null) {
+			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
+			// Add Security Parameters in the request
+			if (!securityInformations.getSecurityParameteres().isEmpty()) {
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
+				List<NameValuePair> nvps = new ArrayList<>();
 
-            validateResponseStatus( nResponse, method, strUrl );
+				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+				// Add to the request URL
+				try {
+					URI uri = new URIBuilder(new URI(strUrl)).addParameters(nvps).build();
+					httpDelete.setUri(uri);
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				}
 
-            if ( headersResponse != null )
-            {
-                for ( Header header : method.getResponseHeaders( ) )
-                {
-                    headersResponse.put( header.getName( ), header.getValue( ) );
-                }
-            }
+			}
+			// Add Headers in the request
+			if (!securityInformations.getSecurityHeaders().isEmpty()) {
 
-            strResponseBody = method.getResponseBodyAsString( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
+				securityInformations.getSecurityHeaders().forEach((k, v) -> httpDelete.addHeader(k, v));
+			}
 
-        return strResponseBody;
+		}
+
+		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpDelete.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
+
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpDelete.getMethod(), response, strUrl);
+
+				if (headersResponse != null && response.getHeaders() != null) {
+
+					Arrays.asList(response.getHeaders()).stream()
+							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
+
+				}
+				HttpEntity entity = response.getEntity();
+				strResponseBody = EntityUtils.toString(entity);
+			}
+
+		}
+
+		catch (IOException | ParseException | URISyntaxException e) {
+			throwHttpAccessException(strUrl, e);
+		}
+
+		return strResponseBody;
     }
 
     /**
@@ -1181,50 +1189,51 @@ public class HttpAccess
      */
     public void downloadFile( String strUrl, OutputStream outputStream ) throws HttpAccessException
     {
-        HttpMethodBase method = new GetMethod( strUrl );
-        method.setFollowRedirects( true );
-        BufferedInputStream bis = null;
+    	HttpGet httpGet = new HttpGet(strUrl);
+    	
+    	
+    	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
-            bis = new BufferedInputStream( method.getResponseBodyAsStream( ) );
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
+				
+				HttpEntity entity = response.getEntity();
+				
+				
+				if(entity!=null)
+				{
+					entity.writeTo(outputStream);				   
+			         	
+				}
+				
+				 
+		        }
+    		}
+    		catch (IOException | ParseException | URISyntaxException e) {
+			throwHttpAccessException(strUrl, e);
+    		}
+		        finally
+		        {
+		            try
+		            {
+		                if ( outputStream != null )
+		                {
+		                	outputStream.close( );
+		                }
 
-            byte [ ] buffer = new byte [ 8 * 1024];
-            int bytesRead;
+		            }
+		            catch( IOException e )
+		            {
+		                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
+		                throw new HttpAccessException( e.getMessage( ), e );
+		            }
 
-            while ( ( bytesRead = bis.read( buffer ) ) != -1 )
-            {
-                outputStream.write( buffer, 0, bytesRead );
-            }
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            try
-            {
-                if ( bis != null )
-                {
-                    bis.close( );
-                }
-
-            }
-            catch( IOException e )
-            {
-                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
-                throw new HttpAccessException( e.getMessage( ), e );
-            }
-
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
-    }
+		          
+		        }
+				
+			
+			}
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -1237,48 +1246,50 @@ public class HttpAccess
      */
     public String getFileName( String strUrl ) throws HttpAccessException
     {
-        String strFileName = null;
-        HttpMethodBase method = new GetMethod( strUrl );
-        method.setFollowRedirects( true );
+          String strFileName = null;
+        
+          HttpGet httpGet = new HttpGet(strUrl);
+    	
+    	
+    	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+				
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
+				
+				
+				Header  headerContentDisposition= response.getHeader(PROPERTY_HEADER_CONTENT_DISPOSITION);
+				  if ( headerContentDisposition != null )
+		            {
+		                String headerValue = headerContentDisposition.getValue( );
+		                Pattern p = Pattern.compile( PATTERN_FILENAME );
+		                Matcher matcher = p.matcher( headerValue );
 
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
-            Header headerContentDisposition = method.getResponseHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
-
-            if ( headerContentDisposition != null )
-            {
-                String headerValue = headerContentDisposition.getValue( );
-                Pattern p = Pattern.compile( PATTERN_FILENAME );
-                Matcher matcher = p.matcher( headerValue );
-
-                if ( matcher.matches( ) )
-                {
-                    strFileName = matcher.group( 1 );
-                }
-            }
-            else
-            {
-                String [ ] tab = strUrl.split( "/" );
-                strFileName = tab [tab.length - 1];
-            }
-
-            method.abort( );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
-
-        return strFileName;
+		                if ( matcher.matches( ) )
+		                {
+		                    strFileName = matcher.group( 1 );
+		                }
+		            }
+		            else
+		            {
+		                String [ ] tab = strUrl.split( "/" );
+		                strFileName = tab [tab.length - 1];
+		            }
+				  httpGet.abort();
+				 
+	       
+		}
+    	}
+		catch (IOException | URISyntaxException|ProtocolException  e) {
+		throwHttpAccessException(strUrl, e);
+		}
+				
+			
+        
+    	return strFileName;
+        
+        
+      
     }
 
     /**
@@ -1292,52 +1303,48 @@ public class HttpAccess
      */
     public FileItem downloadFile( String strUrl ) throws HttpAccessException
     {
-        HttpMethodBase method = new GetMethod( strUrl );
-        method.setFollowRedirects( true );
-
-        MemoryFileItem fileItem = null;
-
-        HttpClient client = null;
-        try
-        {
-            client = _accessService.getHttpClient( method );
-            int nResponse = client.executeMethod( method );
-            validateResponseStatus( nResponse, method, strUrl );
-
+    	 MemoryFileItem fileItem = null;
+         HttpGet httpGet = new HttpGet(strUrl);
+   	
+         try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+				
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
             // Get the file name
             String strFileName = StringUtils.EMPTY;
-            Header headerContentDisposition = method.getResponseHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
+           
+            Header  headerContentDisposition= response.getHeader(PROPERTY_HEADER_CONTENT_DISPOSITION);
+			  if ( headerContentDisposition != null )
+	            {
+	                String headerValue = headerContentDisposition.getValue( );
+	                Pattern p = Pattern.compile( PATTERN_FILENAME );
+	                Matcher matcher = p.matcher( headerValue );
 
-            if ( headerContentDisposition != null )
-            {
-                String headerValue = headerContentDisposition.getValue( );
-                Pattern p = Pattern.compile( PATTERN_FILENAME );
-                Matcher matcher = p.matcher( headerValue );
-
-                if ( matcher.matches( ) )
-                {
-                    strFileName = matcher.group( 1 );
-                }
-            }
-            else
-            {
-                String [ ] tab = strUrl.split( "/" );
-                strFileName = tab [tab.length - 1];
-            }
-
+	                if ( matcher.matches( ) )
+	                {
+	                    strFileName = matcher.group( 1 );
+	                }
+	            }
+	            else
+	            {
+	                String [ ] tab = strUrl.split( "/" );
+	                strFileName = tab [tab.length - 1];
+	            }
+			  
+			  
             // Get the file size
             long lSize = 0;
-            Header headerContentLength = method.getResponseHeader( PROPERTY_HEADER_CONTENT_LENGTH );
-
+            Header  headerContentLength= response.getHeader(PROPERTY_HEADER_CONTENT_LENGTH);
             if ( headerContentLength != null )
             {
-                lSize = Long.parseLong( headerContentLength.getValue( ) );
+                lSize = Long.parseLong( headerContentLength.getValue());
             }
 
             // Get the content type of the file
             String strContentType = StringUtils.EMPTY;
 
-            Header headerContentType = method.getResponseHeader( PROPERTY_HEADER_CONTENT_TYPE );
+            Header headerContentType = response.getHeader( PROPERTY_HEADER_CONTENT_TYPE );
 
             if ( headerContentType != null )
             {
@@ -1354,18 +1361,25 @@ public class HttpAccess
             {
                 strContentType = DEFAULT_MIME_TYPE;
             }
+            
+            
+            HttpEntity entity = response.getEntity();
+			
+			
+			if(entity!=null)
+			{
+				ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
+				entity.writeTo(outputStream);				   
+			    fileItem = new MemoryFileItem(outputStream.toByteArray(), strFileName, lSize, strContentType );   	
+			}
 
-            fileItem = new MemoryFileItem( method.getResponseBody( ), strFileName, lSize, strContentType );
-        }
-        catch( IOException e )
-        {
-            throwHttpAccessException( strUrl, e );
-        }
-        finally
-        {
-            // Release the connection.
-            _accessService.releaseConnection( client, method );
-        }
+			
+			}
+         }
+         
+ 		catch (IOException | URISyntaxException|ProtocolException  e) {
+ 		throwHttpAccessException(strUrl, e);
+ 		}
 
         return fileItem;
     }
@@ -1379,16 +1393,21 @@ public class HttpAccess
      *            The HTTP method
      * @param strCurrentAction
      * @throws HttpAccessException
+     * @throws ParseException 
      */
-    private void validateResponseStatus( int nResponseStatus, HttpMethod method, String strUrl ) throws HttpAccessException
+    private void validateResponseStatus( int nResponseStatus,String strMethodName, CloseableHttpResponse response, String strUrl ) throws HttpAccessException, ParseException
     {
         if ( !_responseValidator.validate( nResponseStatus ) )
         {
-            String strError = "HttpAccess - Error executing method " + method.getName( ) + " at URL : " + stripPassword( strUrl ) + " - return code : " + nResponseStatus;
+            String strError = "HttpAccess - Error executing method " + strMethodName + " at URL : " + stripPassword( strUrl ) + " - return code : " + nResponseStatus;
             String strResponseBody;
             try
             {
-                strResponseBody = " Response Body : \n" + method.getResponseBodyAsString( );
+            	
+            	HttpEntity entity = response.getEntity();
+                // Get response information
+            	
+                strResponseBody = " Response Body : \n" + entity!=null?EntityUtils.toString(entity): " unable to get Response Body.";
 
             }
             catch( IOException ex )

@@ -33,18 +33,20 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import fr.paris.lutece.portal.service.util.AppLogService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.NTCredentials;
-import org.apache.commons.httpclient.URIException;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.protocol.RedirectStrategy;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.util.Timeout;
+import org.apache.http.impl.client.LaxRedirectStrategy;
+
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -112,10 +114,6 @@ public class HttpAccessService implements ResponseStatusValidator
     /** The _singleton. */
     private static HttpAccessService _singleton;
 
-    /** The _multi thread http client. */
-    private static HttpClient _multiThreadHttpClient;
-    private static HttpClient _multiThreadHttpClientNoProxy;
-    private static MultiThreadedHttpConnectionManager _connectionManager;
 
     /** The _str proxy host. */
     private String _strProxyHost;
@@ -191,120 +189,99 @@ public class HttpAccessService implements ResponseStatusValidator
      *            The method
      * @return An HTTP client authenticated
      */
-    public synchronized HttpClient getHttpClient( HttpMethodBase method )
+    public synchronized CloseableHttpClient  getHttpClient(  String strTargetHost )
     {
-        HttpClient client;
+    	
+    	HttpClientBuilder clientBuilder = HttpClients.custom();
+    	
 
         // bNoProxy will be true when we would normally be using a proxy but matched on the NoProxyFor list
-        boolean bNoProxy = false;
-
+      
         if ( StringUtils.isNotBlank( _strProxyHost ) )
         {
-            try
-            {
-                bNoProxy = ( StringUtils.isNotBlank( _strNoProxyFor ) && matchesList( _strNoProxyFor.split( SEPARATOR ), method.getURI( ).getHost( ) ) );
-            }
-            catch( URIException e )
-            {
-                AppLogService.error( e.getMessage( ), e );
-            }
+        	    boolean bNoProxy = ( StringUtils.isNotBlank( _strNoProxyFor ) && matchesList( _strNoProxyFor.split( SEPARATOR ), strTargetHost) );
+                if(!bNoProxy && StringUtils.isNotBlank( _strProxyPort ) && StringUtils.isNumeric( _strProxyPort ))
+                {
+                	final HttpHost proxy = new HttpHost("http", _strProxyHost,Integer.parseInt( _strProxyPort));
+                	clientBuilder.setProxy(proxy);
+                }
+            
         }
 
         if ( _bConnectionPoolEnabled )
         {
-            HttpClient multiThreadHttpClient = bNoProxy ? _multiThreadHttpClientNoProxy : _multiThreadHttpClient;
-            if ( multiThreadHttpClient != null )
-            {
-                return multiThreadHttpClient;
-            }
-            else
-            {
-                if ( _connectionManager == null )
-                {
-                    _connectionManager = new MultiThreadedHttpConnectionManager( );
-                }
-                MultiThreadedHttpConnectionManager connectionManager = _connectionManager;
-
+        	    PoolingHttpClientConnectionManager connManager= new PoolingHttpClientConnectionManager();
+        	
                 if ( StringUtils.isEmpty( _strConnectionPoolMaxConnectionPerHost ) )
                 {
-                    connectionManager.getParams( ).setDefaultMaxConnectionsPerHost( Integer.parseInt( _strConnectionPoolMaxConnectionPerHost ) );
+                	  connManager.setDefaultMaxPerRoute(Integer.parseInt(_strConnectionPoolMaxConnectionPerHost));
                 }
 
                 if ( StringUtils.isEmpty( _strConnectionPoolMaxTotalConnection ) )
                 {
-                    connectionManager.getParams( ).setMaxTotalConnections( Integer.parseInt( _strConnectionPoolMaxTotalConnection ) );
+                	  connManager.setMaxTotal( Integer.parseInt( _strConnectionPoolMaxTotalConnection ) );
                 }
+                clientBuilder.setConnectionManager(connManager);
+            
+         }
+//     
+//        Credentials cred = null;
+//
+//        // If hostname and domain name found, consider we are in NTLM authentication scheme
+//        // else if only username and password found, use simple UsernamePasswordCredentials
+//        if ( StringUtils.isNotBlank( _strHostName ) && StringUtils.isNotBlank( _strDomainName ) )
+//        {
+//            cred = new NTCredentials( _strProxyUserName, _strProxyPassword, _strHostName, _strDomainName );
+//        }
+//        else
+//            if ( StringUtils.isNotBlank( _strProxyUserName ) && StringUtils.isNotBlank( _strProxyPassword ) )
+//            {
+//                cred = new UsernamePasswordCredentials( _strProxyUserName, _strProxyPassword );
+//            }
+//
+//        if ( ( cred != null ) && !bNoProxy )
+//        {
+//            AuthScope authScope = new AuthScope( _strProxyHost, Integer.parseInt( _strProxyPort ), _strRealm );
+//            client.getState( ).setProxyCredentials( authScope, cred );
+//            client.getParams( ).setAuthenticationPreemptive( true );
+//            method.setDoAuthentication( true );
+//        }
 
-                client = new HttpClient( connectionManager );
-                if ( bNoProxy )
-                {
-                    _multiThreadHttpClientNoProxy = client;
-                }
-                else
-                {
-                    _multiThreadHttpClient = client;
-                }
-            }
-        }
-        else
+//        if ( StringUtils.isNotBlank( _strContentCharset ) )
+//        {
+//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, _strContentCharset );
+//        }
+//
+//        if ( StringUtils.isNotBlank( _strElementCharset ) )
+//        {
+//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET, _strElementCharset );
+//        }
+
+        if ( StringUtils.isNotBlank( _strSocketTimeout ) ||  StringUtils.isNotBlank( _strConnectionTimeout ))
         {
-            client = new HttpClient( );
+        	RequestConfig.Builder requestConfiguilder = RequestConfig.custom();
+        	 if(StringUtils.isNotBlank(  _strConnectionTimeout))
+        	 {
+        		 requestConfiguilder.setConnectTimeout(Timeout.ofMilliseconds(( Integer.parseInt( _strConnectionTimeout ))));
+        		 
+        	 }
+        	 
+        	 if(StringUtils.isNotBlank( _strSocketTimeout ))
+        	 {
+        		 requestConfiguilder.setConnectionRequestTimeout(Timeout.ofMilliseconds(( Integer.parseInt( _strSocketTimeout ))));
+        		 
+        	 }
+        	 clientBuilder.setDefaultRequestConfig(requestConfiguilder.build());
+        	
+        	
         }
 
-        // Create an instance of HttpClient.
+        
+        //follow redirect
+        clientBuilder.setRedirectStrategy(DefaultRedirectStrategy.INSTANCE);
+        
 
-        // If proxy host and port found, set the correponding elements
-        if ( StringUtils.isNotBlank( _strProxyHost ) && StringUtils.isNotBlank( _strProxyPort ) && StringUtils.isNumeric( _strProxyPort ) )
-        {
-            if ( !bNoProxy )
-            {
-                client.getHostConfiguration( ).setProxy( _strProxyHost, Integer.parseInt( _strProxyPort ) );
-            }
-        }
-
-        Credentials cred = null;
-
-        // If hostname and domain name found, consider we are in NTLM authentication scheme
-        // else if only username and password found, use simple UsernamePasswordCredentials
-        if ( StringUtils.isNotBlank( _strHostName ) && StringUtils.isNotBlank( _strDomainName ) )
-        {
-            cred = new NTCredentials( _strProxyUserName, _strProxyPassword, _strHostName, _strDomainName );
-        }
-        else
-            if ( StringUtils.isNotBlank( _strProxyUserName ) && StringUtils.isNotBlank( _strProxyPassword ) )
-            {
-                cred = new UsernamePasswordCredentials( _strProxyUserName, _strProxyPassword );
-            }
-
-        if ( ( cred != null ) && !bNoProxy )
-        {
-            AuthScope authScope = new AuthScope( _strProxyHost, Integer.parseInt( _strProxyPort ), _strRealm );
-            client.getState( ).setProxyCredentials( authScope, cred );
-            client.getParams( ).setAuthenticationPreemptive( true );
-            method.setDoAuthentication( true );
-        }
-
-        if ( StringUtils.isNotBlank( _strContentCharset ) )
-        {
-            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, _strContentCharset );
-        }
-
-        if ( StringUtils.isNotBlank( _strElementCharset ) )
-        {
-            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET, _strElementCharset );
-        }
-
-        if ( StringUtils.isNotBlank( _strSocketTimeout ) )
-        {
-            client.getParams( ).setSoTimeout( Integer.parseInt( _strSocketTimeout ) );
-        }
-
-        if ( StringUtils.isNotBlank( _strConnectionTimeout ) )
-        {
-            client.getHttpConnectionManager( ).getParams( ).setConnectionTimeout( Integer.parseInt( _strConnectionTimeout ) );
-        }
-
-        return client;
+        return clientBuilder.build();
     }
 
     /**
@@ -431,25 +408,5 @@ public class HttpAccessService implements ResponseStatusValidator
         return _responseValidator.validate( nStatus );
     }
 
-    /**
-     * Releases the connection.
-     *
-     * Call this method instead of releaseConnection on method because this ensures the connection is closed when we are not pooling connection. See
-     * https://issues.apache.org/jira/browse/HTTPCLIENT-572 or https://doc.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections for an
-     * explanation. In a few words, the default http client (new HttpClient()) doesn't close the connection in an attempt to reuse it if we do another request
-     * to the same host.
-     *
-     * @param client
-     *            The client
-     * @param method
-     *            The method
-     */
-    public void releaseConnection( HttpClient client, HttpMethodBase method )
-    {
-        method.releaseConnection( );
-        if ( client != null && !_bConnectionPoolEnabled )
-        {
-            client.getHttpConnectionManager( ).closeIdleConnections( 0 );
-        }
-    }
+   
 }
