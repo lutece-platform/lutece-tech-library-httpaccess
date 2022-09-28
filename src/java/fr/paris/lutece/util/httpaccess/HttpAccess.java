@@ -133,6 +133,15 @@ public class HttpAccess
         _accessService = HttpAccessService.getInstance( );
         _responseValidator = validator;
     }
+    
+    
+    public HttpAccess(  HttpAccessService accessService,ResponseStatusValidator validator)
+    {
+        _accessService = accessService;
+        _responseValidator =validator;
+    }
+    
+
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -918,7 +927,6 @@ public class HttpAccess
             }
             if ( ( params != null ) && !params.isEmpty( ) )
             {
-                String charset = AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET, DEFAULT_CHARSET );
                 // Additionnal parameters
                 params.forEach((k, v) -> { v.stream().forEach(  y -> { builder.addTextBody(k,y,ContentType.TEXT_PLAIN);});});
                
