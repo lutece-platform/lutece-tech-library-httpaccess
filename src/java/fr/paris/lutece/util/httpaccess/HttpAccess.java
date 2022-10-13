@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -216,8 +217,8 @@ public class HttpAccess
             Map<String, String> headersResponse ) throws HttpAccessException
     {
 		String strResponseBody = StringUtils.EMPTY;
-
-		HttpGet httpGet = new HttpGet(strUrl);
+		
+		 HttpUriRequestBase httpGet = new HttpGet(strUrl);
 
 		// HttpMethodBase method = new GetMethod( strUrl );
 		// method.setFollowRedirects( true );
@@ -225,30 +226,8 @@ public class HttpAccess
 		if (headersRequest != null) {
 			headersRequest.forEach((k, v) -> httpGet.addHeader(k, v));
 		}
-		if (authenticator != null) {
-			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
-			// Add Security Parameters in the request
-			if (!securityInformations.getSecurityParameteres().isEmpty()) {
-
-				List<NameValuePair> nvps = new ArrayList<>();
-
-				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-				// Add to the request URL
-				try {
-					URI uri = new URIBuilder(new URI(strUrl)).addParameters(nvps).build();
-					httpGet.setUri(uri);
-				} catch (URISyntaxException e) {
-					throw new RuntimeException(e);
-				}
-
-			}
-			// Add Headers in the request
-			if (!securityInformations.getSecurityHeaders().isEmpty()) {
-
-				securityInformations.getSecurityHeaders().forEach((k, v) -> httpGet.addHeader(k, v));
-			}
-
-		}
+		
+		addSecurityInformations(httpGet, strResponseBody, authenticator, listElements);
 
 		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
@@ -359,7 +338,7 @@ public class HttpAccess
         String strResponseBody = StringUtils.EMPTY;
         
 
-        HttpPost httpPost = new HttpPost(strUrl);
+        HttpUriRequestBase httpPost = new HttpPost(strUrl);
      
         
     	List<NameValuePair> nvps = new ArrayList<>();
@@ -390,7 +369,7 @@ public class HttpAccess
 			}
 		}
 
-		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps,Charset.forName("UTF-8")));
 
 		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPost.getUri().getHost())) {
 			try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
@@ -455,8 +434,6 @@ public class HttpAccess
             
             	
             	httpRequest=new HttpPut(strUrl);
-            	
-                 
                 break;
 
             case PROPERTY_HTTP_REQUEST_POST:
@@ -498,7 +475,7 @@ public class HttpAccess
 
 		}
 
-		   httpRequest.setEntity(new StringEntity(strResponseBody, ContentType.APPLICATION_JSON, charset, false));
+		   httpRequest.setEntity(new StringEntity(strContent, ContentType.APPLICATION_JSON, charset, false));
 		     
         
         
@@ -709,7 +686,7 @@ public class HttpAccess
     	
     	
     	String strResponseBody = StringUtils.EMPTY;
-        HttpPost httpPost = new HttpPost(strUrl);
+    	HttpUriRequestBase httpPost = new HttpPost(strUrl);
         
         
     	List<NameValuePair> nvps = new ArrayList<>();
@@ -858,7 +835,7 @@ public class HttpAccess
             List<String> listElements, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
         String strResponseBody = StringUtils.EMPTY;
-        HttpPost httpPost = new HttpPost(strUrl);
+        HttpUriRequestBase httpPost = new HttpPost(strUrl);
 
         if (headersRequest != null) {
 			headersRequest.forEach((k, v) -> httpPost.addHeader(k, v));
@@ -1463,4 +1440,39 @@ public class HttpAccess
             return strUrl;
         }
     }
+    
+    
+    
+    private void addSecurityInformations(HttpUriRequestBase httpRequest,String strTargetUrl,RequestAuthenticator authenticator,List<String> listElements)
+    {
+    	
+    	if (authenticator != null) {
+			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
+			// Add Security Parameters in the request
+			if (!securityInformations.getSecurityParameteres().isEmpty()) {
+
+				List<NameValuePair> nvps = new ArrayList<>();
+
+				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+				// Add to the request URL
+				try {
+					URI uri = new URIBuilder(new URI(strTargetUrl)).addParameters(nvps).build();
+					httpRequest.setUri(uri);
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				}
+
+			}
+			// Add security  Headers in the request
+			if (!securityInformations.getSecurityHeaders().isEmpty()) {
+
+				securityInformations.getSecurityHeaders().forEach((k, v) -> httpRequest.addHeader(k, v));
+			}
+
+		}	
+    	
+    	
+    }
+    
+    
 }

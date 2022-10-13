@@ -33,14 +33,19 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.ws.spi.http.HttpExchange;
+
 import org.junit.Test;
 
-import fr.paris.lutece.plugins.identitystore.v1.web.rs.service.Constants;
+
 
 /**
  * Http net Object Accessor
@@ -52,11 +57,12 @@ public class HttpAccessTest
 	public void testDoGet()
 	{
 	
-		String strUrlTestHttp="https://www.google.com/";
+		
+		String strUrlTestHttp="https://httpbin.org/anything";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
 		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("100");
+		configuration.setSocketTimeout("10000");
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -65,7 +71,7 @@ public class HttpAccessTest
 		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
 		
 		
-		mapHeaders.put("Authorization", " Basic anNLa3NvbmhGYXQzUGhwbVhaSl9FSFZxQlRzYTpGZ3VvcHp2YkExT09");
+		mapHeaders.put("Authorization", " Basic token");
 		
 		HttpAccessService httpAccessService=new HttpAccessService(configuration);
 		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
@@ -89,11 +95,11 @@ public class HttpAccessTest
 	public void testDoPost()
 	{
 	
-		String strUrlTestHttp="https://api/token";
+		String strUrlTestHttp="https://httpbin.org/anything";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("100");
+		configuration.setConnectionTimeout("10000");
+		configuration.setSocketTimeout("10000");
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -254,7 +260,7 @@ public class HttpAccessTest
 				+ "    \"fc_birthdate\" : {\n"
 				+ "        \"key\" : \"fc_birthdate\",\n"
 				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"1962-08-24\",\n"
+				+ "        \"value\" : \"1962-08-85\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
 				+ "        \"date_last_update\" : 1622468105000,\n"
 				+ "        \"certified\" : true,\n"
@@ -270,7 +276,7 @@ public class HttpAccessTest
 				+ "      \"fc_given_name\" : {\n"
 				+ "        \"key\" : \"fc_given_name\",\n"
 				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"Angela Claire Louise\",\n"
+				+ "        \"value\" : \"Angela Claire Louise 3\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
 				+ "        \"date_last_update\" : 1622468105000,\n"
 				+ "        \"certified\" : true,\n"
@@ -356,7 +362,7 @@ public class HttpAccessTest
 				+ "}";
 		
 		
-        String strUrlTestHttp="https://api/identity/rest/identitystore/v2/identity/update";
+        String strUrlTestHttp="https://httpbin.org/anything";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
 		configuration.setConnectionTimeout("1000");
@@ -398,6 +404,278 @@ public class HttpAccessTest
 	}
 	
 	
+	
+	
+
+	@Test
+	public void testDoPostJson()		
+	{
+		String strJson= "{\n"
+				+ "  \"identity_change\" : {\n"
+				+ "    \"identity\" : {\n"
+				+ "    \"customer_id\" : \"b59f9424-6c5f-4bc7-a6c7-efd1e29655d4\",\n"
+				+ "    \"attributes\" : {\n"
+				+ "      \"birthcountry\" : {\n"
+				+ "        \"key\" : \"birthcountry\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"FRANCE\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"birthdate\" : {\n"
+				+ "        \"key\" : \"birthdate\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"24/08/1962\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"gender\" : {\n"
+				+ "        \"key\" : \"gender\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"1\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"birthplace\" : {\n"
+				+ "        \"key\" : \"birthplace\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"PARIS 07\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"login\" : {\n"
+				+ "        \"key\" : \"login\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"testbp2022@yopmail.com\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"family_name\" : {\n"
+				+ "        \"key\" : \"family_name\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"DUBOIS\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"first_name\" : {\n"
+				+ "        \"key\" : \"first_name\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"Angela Claire Louise\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"email\" : {\n"
+				+ "        \"key\" : \"email\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"testbp2022@yopmail.com\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : false,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : null\n"
+				+ "      },\n"
+				+ "    \"fc_birthdate\" : {\n"
+				+ "        \"key\" : \"fc_birthdate\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"1962-08-85\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "   \n"
+				+ "      \"fc_given_name\" : {\n"
+				+ "        \"key\" : \"fc_given_name\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"Angela Claire Louise 3\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"fc_birthplace\" : {\n"
+				+ "        \"key\" : \"fc_birthplace\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"75107\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "  \n"
+				+ "      \"fc_gender\" : {\n"
+				+ "        \"key\" : \"fc_gender\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"female\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "     \n"
+				+ "      \"fc_family_name\" : {\n"
+				+ "        \"key\" : \"fc_family_name\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"DUBOIS\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "      },\n"
+				+ "      \"fc_birthcountry\" : {\n"
+				+ "        \"key\" : \"fc_birthcountry\",\n"
+				+ "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"99100\",\n"
+				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n"
+				+ "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n"
+				+ "        \"certificate\" : {\n"
+				+ "          \"certifier_code\" : \"fccertifier\",\n"
+				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
+				+ "          \"certificate_level\" : 3,\n"
+				+ "          \"certificate_exp_date\" : null\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "  }\n"
+				+ "}\n"
+				+ ",\n"
+				+ "    \"author\" : {\n"
+				+ "      \"id\" : \"usager\",\n"
+				+ "      \"type\" : 1,\n"
+				+ "      \"application_code\" : \"RhssoFranceConnect\"\n"
+				+ "    }\n"
+				+ "  }\n"
+				+ "}";
+		
+		
+        String strUrlTestHttp="https://httpbin.org/anything";
+		
+		HttpClientConfiguration configuration=new HttpClientConfiguration();
+		configuration.setConnectionTimeout("1000");
+		configuration.setSocketTimeout("10000");
+		configuration.setProxyHost("192.168.64.41");
+		configuration.setNoProxyFor("*.paris.mdp");
+		configuration.setProxyPort("8080");
+		
+		Map<String,String> mapHeaders=new HashMap<String, String>();
+	
+		   Map<String, List<String>> mapParameters = new HashMap<String, List<String>>( );
+		List<String> params=new ArrayList<String>();
+		params.add(strJson);
+		mapParameters.put( "identityChange", params);
+		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
+		
+		
+		//mapHeaders.put("Content-Type", "application/json; charset=utf-8");
+		mapHeaders.put("client_code", "RhssoFranceConnect");
+		
+		//mapParameters.put("grant_type", "client_credentials");
+		HttpAccessService httpAccessService=new HttpAccessService(configuration);
+		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
+		
+		
+		
+		
+		try {
+			String strTest=httpAccess.doPostJSON(strUrlTestHttp, strJson, mapHeaders, mapHeadersResponse);
+			
+			System.out.println(strTest);
+			
+			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
+		} catch (HttpAccessException e) {
+			// TODO Auto-generated catch block
+			System.out.println(e);
+		}
+		
+		
+	}
 	
 	
 	
