@@ -81,7 +81,9 @@ public class HttpAccessTest
 		
 		try {
 			String strTest=httpAccess.doGet(strUrlTestHttp, null,null, mapHeaders, mapHeadersResponse);
+			System.out.println("*************************************");
 			System.out.println(strTest);
+			System.out.println("*************************************");
 			
 			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
 		} catch (HttpAccessException e) {

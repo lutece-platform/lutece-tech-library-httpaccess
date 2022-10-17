@@ -113,7 +113,15 @@ public class HttpAccessService implements ResponseStatusValidator
     private static HttpAccessService _singleton;
 
     private HttpClientConfiguration _httpClientConfiguration;
-    /** The Constant SEPARATOR. */
+   
+    
+    public HttpClientConfiguration getHttpClientConfiguration() {
+		return _httpClientConfiguration;
+	}
+
+
+
+	/** The Constant SEPARATOR. */
     private static final String SEPARATOR = ",";
 
     private ResponseStatusValidator _responseValidator;

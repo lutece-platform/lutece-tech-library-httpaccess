@@ -118,7 +118,7 @@ public class HttpAccess
     private static final String JSON_CHARSET = "UTF-8";
 
     /** The Constant DEFAULT_CHARSET. */
-    private static final String DEFAULT_CHARSET = "ISO-8859-1";
+    private static final String DEFAULT_CHARSET = "UTF-8";
 
     private ResponseStatusValidator _responseValidator;
     private HttpAccessService _accessService;
@@ -219,37 +219,16 @@ public class HttpAccess
 		String strResponseBody = StringUtils.EMPTY;
 		
 		 HttpUriRequestBase httpGet = new HttpGet(strUrl);
+		 addSecurityInformations(httpGet, strUrl, authenticator, listElements);
 
-		// HttpMethodBase method = new GetMethod( strUrl );
-		// method.setFollowRedirects( true );
-
+		 
 		if (headersRequest != null) {
 			headersRequest.forEach((k, v) -> httpGet.addHeader(k, v));
 		}
 		
-		addSecurityInformations(httpGet, strResponseBody, authenticator, listElements);
-
-		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
-			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
-
-				if (headersResponse != null && response.getHeaders() != null) {
-
-					Arrays.asList(response.getHeaders()).stream()
-							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
-
-				}
-				HttpEntity entity = response.getEntity();
-				strResponseBody = EntityUtils.toString(entity);
-			}
-
-		}
-
-		catch (IOException | ParseException | URISyntaxException e) {
-			throwHttpAccessException(strUrl, e);
-		}
+		
+		strResponseBody=getResponseBody(httpGet, strUrl, headersResponse);
+		
 
 		return strResponseBody;
     }
@@ -335,65 +314,12 @@ public class HttpAccess
     public String doPost( String strUrl, Map<String, String> params, RequestAuthenticator authenticator, List<String> listElements,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-        String strResponseBody = StringUtils.EMPTY;
-        
-
+          
         HttpUriRequestBase httpPost = new HttpPost(strUrl);
      
+        return doSendFormEntity(httpPost, strUrl, params, authenticator, listElements, headersRequest, headersResponse);
         
-    	List<NameValuePair> nvps = new ArrayList<>();
         
-
-		if (headersRequest != null) {
-			headersRequest.forEach((k, v) -> httpPost.addHeader(k, v));
-		}
-	
-		
-		 if ( params != null ){
-			 	params.forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-	        }
-
-		
-		if (authenticator != null) {
-			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
-	
-			if (!securityInformations.getSecurityParameteres().isEmpty()) {
-               //Add security parameter
-				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-				
-			}
-			// Add Security Headers in the request
-			if (!securityInformations.getSecurityHeaders().isEmpty()) {
-
-				securityInformations.getSecurityHeaders().forEach((k, v) -> httpPost.addHeader(k, v));
-			}
-		}
-
-		httpPost.setEntity(new UrlEncodedFormEntity(nvps,Charset.forName("UTF-8")));
-
-		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPost.getUri().getHost())) {
-			try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpPost.getMethod(), response, strUrl);
-
-				if (headersResponse != null && response.getHeaders() != null) {
-
-					Arrays.asList(response.getHeaders()).stream()
-							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
-
-				}
-				HttpEntity entity = response.getEntity();
-				strResponseBody = EntityUtils.toString(entity);
-			}
-
-		}
-
-		catch (IOException | ParseException | URISyntaxException e) {
-			throwHttpAccessException(strUrl, e);
-		}
-
-        return strResponseBody;
     }
 
     /**
@@ -432,7 +358,6 @@ public class HttpAccess
         {
             case PROPERTY_HTTP_REQUEST_PUT:
             
-            	
             	httpRequest=new HttpPut(strUrl);
                 break;
 
@@ -702,45 +627,11 @@ public class HttpAccess
             }
 
     	
-    	if (authenticator != null) {
-    		AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
+    	addSecurityInformations(httpPost, strUrl, authenticator, listElements);
+    	httpPost.setEntity(new UrlEncodedFormEntity(nvps, !StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET)));
 
-    		if (!securityInformations.getSecurityParameteres().isEmpty()) {
-               //Add security parameter
-    			securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-    			
-    		}
-    		// Add Security Headers in the request
-    		if (!securityInformations.getSecurityHeaders().isEmpty()) {
-
-    			securityInformations.getSecurityHeaders().forEach((k, v) -> httpPost.addHeader(k, v));
-    		}
-    	}
-
-    	httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-
-    	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPost.getUri().getHost())) {
-    		try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-
-    			int nResponse = response.getCode();
-    			validateResponseStatus(nResponse, httpPost.getMethod(), response, strUrl);
-
-    			if (headersResponse != null && response.getHeaders() != null) {
-
-    				Arrays.asList(response.getHeaders()).stream()
-    						.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
-
-    			}
-    			HttpEntity entity = response.getEntity();
-    			strResponseBody = EntityUtils.toString(entity);
-    		}
-
-    	}
-
-    	catch (IOException | ParseException | URISyntaxException e) {
-    		throwHttpAccessException(strUrl, e);
-    	}
-
+		strResponseBody=getResponseBody(httpPost, strUrl, headersResponse);
+		
         return strResponseBody;
     }
 
@@ -978,66 +869,61 @@ public class HttpAccess
     public String doPut( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> params,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-    	String strResponseBody = StringUtils.EMPTY;
-        
-
+       
         HttpPut httpPut = new HttpPut(strUrl);
+        return doSendFormEntity(httpPut, strUrl, params, authenticator, listElements, headersRequest, headersResponse);
+    }
+    
+    
+    
+    
+    /**
+     * Send a POST or PUT HTTP request to an url and return the response content.
+     *
+     * @param strUrl
+     *            the url to access
+     * @param params
+     *            the list of parameters to post
+     * @param authenticator
+     *            The {@link RequestAuthenticator}
+     * @param listElements
+     *            to include in the signature
+     * @param headersRequest
+     *            Map of headers request parameters
+     * @param headersResponse
+     *            Map to contain response headers
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException
+     *             if there is a problem to access to the given Url
+     */
+    private String doSendFormEntity( HttpUriRequestBase httprequestBase,String strUrl, Map<String, String> params, RequestAuthenticator authenticator, List<String> listElements,
+            Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
+    {
+        String strResponseBody = StringUtils.EMPTY;
+        
+        
      
-        
     	List<NameValuePair> nvps = new ArrayList<>();
-        
 
 		if (headersRequest != null) {
-			headersRequest.forEach((k, v) -> httpPut.addHeader(k, v));
+			headersRequest.forEach((k, v) -> httprequestBase.addHeader(k, v));
 		}
-	
+		if (params != null) {
+			params.forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
+		}
 		
-		 if ( params != null ){
-			 	params.forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-	        }
+		addSecurityInformations(httprequestBase, strUrl, authenticator, listElements);
+		httprequestBase.setEntity(new UrlEncodedFormEntity(nvps, !StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET)));
 
+		strResponseBody=getResponseBody(httprequestBase, strUrl, headersResponse);
 		
-		if (authenticator != null) {
-			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
-	
-			if (!securityInformations.getSecurityParameteres().isEmpty()) {
-               //Add security parameter
-				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-				
-			}
-			// Add Security Headers in the request
-			if (!securityInformations.getSecurityHeaders().isEmpty()) {
-
-				securityInformations.getSecurityHeaders().forEach((k, v) -> httpPut.addHeader(k, v));
-			}
-		}
-
-		httpPut.setEntity(new UrlEncodedFormEntity(nvps));
-
-		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPut.getUri().getHost())) {
-			try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
-
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpPut.getMethod(), response, strUrl);
-
-				if (headersResponse != null && response.getHeaders() != null) {
-
-					Arrays.asList(response.getHeaders()).stream()
-							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
-
-				}
-				HttpEntity entity = response.getEntity();
-				strResponseBody = EntityUtils.toString(entity);
-			}
-
-		}
-
-		catch (IOException | ParseException | URISyntaxException e) {
-			throwHttpAccessException(strUrl, e);
-		}
 
         return strResponseBody;
     }
+
+    
+    
+    
 
     /**
      * Send a DELETE HTTP request to an url and return the response content.
@@ -1060,61 +946,18 @@ public class HttpAccess
             Map<String, String> headersResponse ) throws HttpAccessException
     {
     	String strResponseBody = StringUtils.EMPTY;
+		
+		 HttpUriRequestBase httpDelete = new HttpDelete(strUrl);
+		 addSecurityInformations(httpDelete, strUrl, authenticator, listElements);
 
-		HttpDelete httpDelete = new HttpDelete(strUrl);
-
-		// HttpMethodBase method = new GetMethod( strUrl );
-		// method.setFollowRedirects( true );
-
+		 
 		if (headersRequest != null) {
 			headersRequest.forEach((k, v) -> httpDelete.addHeader(k, v));
 		}
-		if (authenticator != null) {
-			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
-			// Add Security Parameters in the request
-			if (!securityInformations.getSecurityParameteres().isEmpty()) {
-
-				List<NameValuePair> nvps = new ArrayList<>();
-
-				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-				// Add to the request URL
-				try {
-					URI uri = new URIBuilder(new URI(strUrl)).addParameters(nvps).build();
-					httpDelete.setUri(uri);
-				} catch (URISyntaxException e) {
-					throw new RuntimeException(e);
-				}
-
-			}
-			// Add Headers in the request
-			if (!securityInformations.getSecurityHeaders().isEmpty()) {
-
-				securityInformations.getSecurityHeaders().forEach((k, v) -> httpDelete.addHeader(k, v));
-			}
-
-		}
-
-		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpDelete.getUri().getHost())) {
-			try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
-
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpDelete.getMethod(), response, strUrl);
-
-				if (headersResponse != null && response.getHeaders() != null) {
-
-					Arrays.asList(response.getHeaders()).stream()
-							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
-
-				}
-				HttpEntity entity = response.getEntity();
-				strResponseBody = EntityUtils.toString(entity);
-			}
-
-		}
-
-		catch (IOException | ParseException | URISyntaxException e) {
-			throwHttpAccessException(strUrl, e);
-		}
+		
+		
+		strResponseBody=getResponseBody(httpDelete, strUrl, headersResponse);
+		
 
 		return strResponseBody;
     }
@@ -1471,7 +1314,38 @@ public class HttpAccess
 
 		}	
     	
+ 
+
+    }
+    
+    
+    private String getResponseBody( HttpUriRequestBase httpRequest,String strUrl,Map<String,String> mapResponseHeader ) throws HttpAccessException
+    {
+    	String strResponseBody= StringUtils.EMPTY;
+		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost())) {
+			try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
+
+				int nResponse = response.getCode();
+				validateResponseStatus(nResponse, httpRequest.getMethod(), response, strUrl);
+
+				if (mapResponseHeader != null && response.getHeaders() != null) {
+
+					Arrays.asList(response.getHeaders()).stream()
+							.forEach(x -> mapResponseHeader.put(x.getName(), x.getValue()));
+
+				}
+				HttpEntity entity = response.getEntity();
+				strResponseBody = EntityUtils.toString(entity,!StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET));
+				
+			}
+
+		}
+
+		catch (IOException | ParseException | URISyntaxException e) {
+			throwHttpAccessException(strUrl, e);
+		}	
     	
+		return strResponseBody;
     }
     
     
