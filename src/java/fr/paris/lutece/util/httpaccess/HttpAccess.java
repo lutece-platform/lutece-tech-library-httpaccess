@@ -73,7 +73,6 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
 
 import fr.paris.lutece.portal.service.util.AppLogService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.util.signrequest.AuthenticateRequestInformations;
 import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
@@ -114,8 +113,6 @@ public class HttpAccess
     /** The Constant PROPERTY_HTTP_REQUEST_PUT. */
     private static final String PROPERTY_HTTP_REQUEST_PUT = "PUT";
 
-    /** The Constant JSON_CHARSET. */
-    private static final String JSON_CHARSET = "UTF-8";
 
     /** The Constant DEFAULT_CHARSET. */
     private static final String DEFAULT_CHARSET = "UTF-8";
@@ -375,57 +372,11 @@ public class HttpAccess
         if (headersRequest != null) {
 			headersRequest.forEach((k, v) -> httpRequest.addHeader(k, v));
 		}
-		if (authenticator != null) {
-			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
-			// Add Security Parameters in the request
-			if (!securityInformations.getSecurityParameteres().isEmpty()) {
-
-				List<NameValuePair> nvps = new ArrayList<>();
-
-				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-				// Add to the request URL
-				try {
-					URI uri = new URIBuilder(new URI(strUrl)).addParameters(nvps).build();
-					httpRequest.setUri(uri);
-				} catch (URISyntaxException e) {
-					throw new RuntimeException(e);
-				}
-
-			}
-			// Add Headers in the request
-			if (!securityInformations.getSecurityHeaders().isEmpty()) {
-
-				securityInformations.getSecurityHeaders().forEach((k, v) -> httpRequest.addHeader(k, v));
-			}
-
-		}
-
-		   httpRequest.setEntity(new StringEntity(strContent, ContentType.APPLICATION_JSON, charset, false));
-		     
+        addSecurityInformations(httpRequest, strUrl, authenticator, listElements);
+        httpRequest.setEntity(new StringEntity(strContent, ContentType.APPLICATION_JSON, charset, false));
         
-        
-			try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost())) {
-				try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
-
-					int nResponse = response.getCode();
-					validateResponseStatus(nResponse, httpRequest.getMethod(), response, strUrl);
-
-					if (headersResponse != null && response.getHeaders() != null) {
-
-						Arrays.asList(response.getHeaders()).stream()
-								.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
-
-					}
-					HttpEntity entity = response.getEntity();
-					strResponseBody = EntityUtils.toString(entity);
-				}
-
-			}
-
-			catch (IOException | ParseException | URISyntaxException e) {
-				throwHttpAccessException(strUrl, e);
-			}
-
+		   strResponseBody=getResponseBody(httpRequest, strUrl, headersResponse);
+			
 
         return strResponseBody;
     }
@@ -452,7 +403,7 @@ public class HttpAccess
     public String doPostJSON( String strUrl, String strJSON, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE, JSON_CHARSET, authenticator, listElements,
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, authenticator, listElements,
                 headersRequest, headersResponse );
     }
 
@@ -474,7 +425,7 @@ public class HttpAccess
     public String doPostJSON( String strUrl, String strJSON, Map<String, String> headersRequest, Map<String, String> headersResponse )
             throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE, JSON_CHARSET, null, null, headersRequest,
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, null, null, headersRequest,
                 headersResponse );
     }
 
@@ -500,7 +451,7 @@ public class HttpAccess
     public String doPutJSON( String strUrl, String strJSON, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE, JSON_CHARSET, authenticator, listElements,
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, authenticator, listElements,
                 headersRequest, headersResponse );
     }
 
@@ -521,7 +472,7 @@ public class HttpAccess
      */
     public String doPutJSON( String strUrl, String strJSON, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE, JSON_CHARSET, null, null, headersRequest,
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, null, null, headersRequest,
                 headersResponse );
     }
 
@@ -624,7 +575,7 @@ public class HttpAccess
     	
     	 if ( params != null ){
     		 	params.forEach((k, v) -> v.stream().forEach(y-> nvps.add(new BasicNameValuePair(k, y))));
-            }
+          }
 
     	
     	addSecurityInformations(httpPost, strUrl, authenticator, listElements);
@@ -757,17 +708,27 @@ public class HttpAccess
                                 {
                                     strContentType = splitContentType [0];
                                 }
-                                if ( splitContentType.length > 1 && StringUtils.isNotBlank( splitContentType [1] ) )
+                                if ( splitContentType.length > 1 && StringUtils.isNotBlank( splitContentType [1] ) &&   splitContentType [1] .toUpperCase().contains("CHARSET") )
                                 {
-                                    strCharset = splitContentType [1];
+                                	
+                                	String [ ] splitCharset =splitContentType [1].split("=");
+                                	if(splitCharset.length>1)
+                                	{
+                                		strCharset = splitCharset [1];
+                                	}
+                                    
+           
+                                    
                                 }
                             }
 
                             if ( fileItem.isInMemory( ) )
                             {
                      
+                               ContentType contentType= !StringUtils.isEmpty(strContentType)?ContentType.create(strContentType,!StringUtils.isEmpty(strCharset)?Charset.forName(strCharset):Charset.forName(DEFAULT_CHARSET)):ContentType.DEFAULT_BINARY;
+                                 
+                            	builder.addBinaryBody(paramFileItem.getKey( ), fileItem.get( ),contentType,fileItem.getName());
                             	
-                            	builder.addBinaryBody(paramFileItem.getKey( ), fileItem.get( ), ContentType.DEFAULT_BINARY,fileItem.getName());
                             	
                             }
                             else
@@ -776,11 +737,13 @@ public class HttpAccess
                                 // Store files for deletion after the request completed
                                 listFiles.add( file );
                                 fileItem.write( file );
-                                builder.addBinaryBody(paramFileItem.getKey( ), file, ContentType.DEFAULT_BINARY,fileItem.getName());
-                         
+                                ContentType contentType= !StringUtils.isEmpty(strContentType)?ContentType.create(strContentType,!StringUtils.isEmpty(strCharset)?Charset.forName(strCharset):Charset.forName(DEFAULT_CHARSET)):ContentType.DEFAULT_BINARY;
                                 
+                                builder.addBinaryBody(paramFileItem.getKey( ), file,contentType ,fileItem.getName());
+                         
                              
                             }
+                           
 
                           
                         }
@@ -795,52 +758,19 @@ public class HttpAccess
             }
             if ( ( params != null ) && !params.isEmpty( ) )
             {
+            	
+            	 ContentType contentType= ContentType.create("text/plain",!StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET));
                 // Additionnal parameters
-                params.forEach((k, v) -> { v.stream().forEach(  y -> { builder.addTextBody(k,y,ContentType.TEXT_PLAIN);});});
+                params.forEach((k, v) -> { v.stream().forEach(  y -> { builder.addTextBody(k,y,contentType);});});
                
             }
             
-        	if (authenticator != null) {
-        		AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
-
-        		if (!securityInformations.getSecurityParameteres().isEmpty()) {
-                   //Add security parameter
-        			securityInformations.getSecurityParameteres().forEach( (k, v)  -> {builder.addTextBody(k,v,ContentType.TEXT_PLAIN);});
-        			
-        		}
-        		// Add Security Headers in the request
-        		if (!securityInformations.getSecurityHeaders().isEmpty()) {
-
-        			securityInformations.getSecurityHeaders().forEach((k, v) -> httpPost.addHeader(k, v));
-        		}
-        	}
-            
-            
-            
+            addSecurityInformations(httpPost, strUrl, authenticator, listElements);
+            builder.setCharset(  !StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET));
         	HttpEntity entityForm = builder.build();
         	httpPost.setEntity(entityForm);
-            
-        	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpPost.getUri().getHost())) {
-    			try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-
-    				int nResponse = response.getCode();
-    				validateResponseStatus(nResponse, httpPost.getMethod(), response, strUrl);
-
-    				if (headersResponse != null && response.getHeaders() != null) {
-
-    					Arrays.asList(response.getHeaders()).stream()
-    							.forEach(x -> headersResponse.put(x.getName(), x.getValue()));
-
-    				}
-    				HttpEntity entity = response.getEntity();
-    				strResponseBody = EntityUtils.toString(entity);
-    			}
-
-    		}
-
-    		catch (IOException | ParseException | URISyntaxException e) {
-    			throwHttpAccessException(strUrl, e);
-    		}
+        	
+        	strResponseBody=getResponseBody(httpPost, strUrl, headersResponse);
 
        
         
@@ -901,8 +831,6 @@ public class HttpAccess
     {
         String strResponseBody = StringUtils.EMPTY;
         
-        
-     
     	List<NameValuePair> nvps = new ArrayList<>();
 
 		if (headersRequest != null) {
@@ -1019,8 +947,9 @@ public class HttpAccess
     {
     	HttpGet httpGet = new HttpGet(strUrl);
     	
-    	
-    	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
+    	try  {
+    		
+    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost(),false);
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 
 				int nResponse = response.getCode();
@@ -1079,7 +1008,8 @@ public class HttpAccess
           HttpGet httpGet = new HttpGet(strUrl);
     	
     	
-    	try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
+    	try  {
+    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost(),false);
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 				
 				int nResponse = response.getCode();
@@ -1103,7 +1033,7 @@ public class HttpAccess
 		                String [ ] tab = strUrl.split( "/" );
 		                strFileName = tab [tab.length - 1];
 		            }
-				  httpGet.abort();
+				
 				 
 	       
 		}
@@ -1134,7 +1064,9 @@ public class HttpAccess
     	 MemoryFileItem fileItem = null;
          HttpGet httpGet = new HttpGet(strUrl);
    	
-         try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost())) {
+         try {
+        	 
+        	 CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost(),false);
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 				
 				int nResponse = response.getCode();
@@ -1322,7 +1254,8 @@ public class HttpAccess
     private String getResponseBody( HttpUriRequestBase httpRequest,String strUrl,Map<String,String> mapResponseHeader ) throws HttpAccessException
     {
     	String strResponseBody= StringUtils.EMPTY;
-		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost())) {
+		try {
+			CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost(),false);
 			try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
 
 				int nResponse = response.getCode();

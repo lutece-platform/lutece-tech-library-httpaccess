@@ -113,6 +113,11 @@ public class HttpAccessService implements ResponseStatusValidator
     private static HttpAccessService _singleton;
 
     private HttpClientConfiguration _httpClientConfiguration;
+    
+    
+    private  PoolingHttpClientConnectionManager _connectionManager;
+    
+    private  CloseableHttpClient _httpClient;
    
     
     public HttpClientConfiguration getHttpClientConfiguration() {
@@ -164,102 +169,113 @@ public class HttpAccessService implements ResponseStatusValidator
      *            The method
      * @return An HTTP client authenticated
      */
-    public synchronized CloseableHttpClient  getHttpClient(  String strTargetHost )
+    public synchronized CloseableHttpClient  getHttpClient(  String strTargetHost,boolean bForceReinit )
     {
     	
-    	HttpClientBuilder clientBuilder = HttpClients.custom();
     	
-
-        // bNoProxy will be true when we would normally be using a proxy but matched on the NoProxyFor list
-      
-        if ( StringUtils.isNotBlank( _httpClientConfiguration.getProxyHost() ) )
-        {
-        	    boolean bNoProxy = ( StringUtils.isNotBlank( _httpClientConfiguration.getNoProxyFor() ) && matchesList( _httpClientConfiguration.getNoProxyFor().split( SEPARATOR ), strTargetHost) );
-                if(!bNoProxy && StringUtils.isNotBlank( _httpClientConfiguration.getProxyPort() ) && StringUtils.isNumeric( _httpClientConfiguration.getProxyPort() ))
-                {
-                	final HttpHost proxy = new HttpHost("http", _httpClientConfiguration.getProxyHost(),Integer.parseInt( _httpClientConfiguration.getProxyPort()));
-                	clientBuilder.setProxy(proxy);
-                }
-            
-        }
-
-        if ( _httpClientConfiguration.isConnectionPoolEnabled() )
-        {
-        	    PoolingHttpClientConnectionManager connManager= new PoolingHttpClientConnectionManager();
-        	
-                if ( StringUtils.isEmpty( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost() ) )
-                {
-                	  connManager.setDefaultMaxPerRoute(Integer.parseInt(_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost()));
-                }
-
-                if ( StringUtils.isEmpty( _httpClientConfiguration.getConnectionPoolMaxTotalConnection() ) )
-                {
-                	  connManager.setMaxTotal( Integer.parseInt(  _httpClientConfiguration.getConnectionPoolMaxTotalConnection() ) );
-                }
-                clientBuilder.setConnectionManager(connManager);
-            
-         }
-//     
-//        Credentials cred = null;
-//
-//        // If hostname and domain name found, consider we are in NTLM authentication scheme
-//        // else if only username and password found, use simple UsernamePasswordCredentials
-//        if ( StringUtils.isNotBlank( _strHostName ) && StringUtils.isNotBlank( _strDomainName ) )
-//        {
-//            cred = new NTCredentials( _strProxyUserName, _strProxyPassword, _strHostName, _strDomainName );
-//        }
-//        else
-//            if ( StringUtils.isNotBlank( _strProxyUserName ) && StringUtils.isNotBlank( _strProxyPassword ) )
-//            {
-//                cred = new UsernamePasswordCredentials( _strProxyUserName, _strProxyPassword );
-//            }
-//
-//        if ( ( cred != null ) && !bNoProxy )
-//        {
-//            AuthScope authScope = new AuthScope( _strProxyHost, Integer.parseInt( _strProxyPort ), _strRealm );
-//            client.getState( ).setProxyCredentials( authScope, cred );
-//            client.getParams( ).setAuthenticationPreemptive( true );
-//            method.setDoAuthentication( true );
-//        }
-
-//        if ( StringUtils.isNotBlank( _strContentCharset ) )
-//        {
-//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, _strContentCharset );
-//        }
-//
-//        if ( StringUtils.isNotBlank( _strElementCharset ) )
-//        {
-//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET, _strElementCharset );
-//        }
-
-        if ( StringUtils.isNotBlank(  _httpClientConfiguration.getSocketTimeout() ) ||  StringUtils.isNotBlank(  _httpClientConfiguration.getConnectionTimeout() ))
-        {
-        	RequestConfig.Builder requestConfiguilder = RequestConfig.custom();
-        	 if(StringUtils.isNotBlank(   _httpClientConfiguration.getConnectionTimeout()))
-        	 {
-        		 requestConfiguilder.setConnectTimeout(Timeout.ofMilliseconds(( Integer.parseInt(  _httpClientConfiguration.getConnectionTimeout() ))));
-        		 
-        	 }
-        	 
-        	 if(StringUtils.isNotBlank(  _httpClientConfiguration.getSocketTimeout() ))
-        	 {
-        		
-        		 requestConfiguilder.setResponseTimeout(Timeout.ofMilliseconds(( Integer.parseInt(  _httpClientConfiguration.getSocketTimeout() ))));
-        		
-        		 
-        	 }
-        	 clientBuilder.setDefaultRequestConfig(requestConfiguilder.build());
-        	
-        	
+      if(_httpClient==null || bForceReinit)
+      {
+			HttpClientBuilder clientBuilder = HttpClients.custom();
+			
+		
+		    // bNoProxy will be true when we would normally be using a proxy but matched on the NoProxyFor list
+		  
+		    if ( StringUtils.isNotBlank( _httpClientConfiguration.getProxyHost() ) )
+		    {
+		    	    boolean bNoProxy = ( StringUtils.isNotBlank( _httpClientConfiguration.getNoProxyFor() ) && matchesList( _httpClientConfiguration.getNoProxyFor().split( SEPARATOR ), strTargetHost) );
+		            if(!bNoProxy && StringUtils.isNotBlank( _httpClientConfiguration.getProxyPort() ) && StringUtils.isNumeric( _httpClientConfiguration.getProxyPort() ))
+		            {
+		            	final HttpHost proxy = new HttpHost("http", _httpClientConfiguration.getProxyHost(),Integer.parseInt( _httpClientConfiguration.getProxyPort()));
+		            	clientBuilder.setProxy(proxy);
+		            }
+		        
+		    }
+		
+		    if ( _httpClientConfiguration.isConnectionPoolEnabled() )
+		    {
+		    	
+		    	  if(_connectionManager==null)
+		    	  {
+		    		  _connectionManager= new PoolingHttpClientConnectionManager();
+		        	
+		                if ( !StringUtils.isEmpty( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost() ) )
+		                {
+		                	_connectionManager.setDefaultMaxPerRoute(Integer.parseInt(_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost()));
+		                	
+		                
+		                }
+		
+		                if ( !StringUtils.isEmpty( _httpClientConfiguration.getConnectionPoolMaxTotalConnection() ) )
+		                {
+		                	_connectionManager.setMaxTotal( Integer.parseInt(  _httpClientConfiguration.getConnectionPoolMaxTotalConnection() ) );
+		                }
+		               
+		    	  }
+		            clientBuilder.setConnectionManager(_connectionManager);
+		        
+		     }
+		//     
+		//        Credentials cred = null;
+		//
+		//        // If hostname and domain name found, consider we are in NTLM authentication scheme
+		//        // else if only username and password found, use simple UsernamePasswordCredentials
+		//        if ( StringUtils.isNotBlank( _strHostName ) && StringUtils.isNotBlank( _strDomainName ) )
+		//        {
+		//            cred = new NTCredentials( _strProxyUserName, _strProxyPassword, _strHostName, _strDomainName );
+		//        }
+		//        else
+		//            if ( StringUtils.isNotBlank( _strProxyUserName ) && StringUtils.isNotBlank( _strProxyPassword ) )
+		//            {
+		//                cred = new UsernamePasswordCredentials( _strProxyUserName, _strProxyPassword );
+		//            }
+		//
+		//        if ( ( cred != null ) && !bNoProxy )
+		//        {
+		//            AuthScope authScope = new AuthScope( _strProxyHost, Integer.parseInt( _strProxyPort ), _strRealm );
+		//            client.getState( ).setProxyCredentials( authScope, cred );
+		//            client.getParams( ).setAuthenticationPreemptive( true );
+		//            method.setDoAuthentication( true );
+		//        }
+		
+		//        if ( StringUtils.isNotBlank( _strContentCharset ) )
+		//        {
+		//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, _strContentCharset );
+		//        }
+		//
+		//        if ( StringUtils.isNotBlank( _strElementCharset ) )
+		//        {
+		//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET, _strElementCharset );
+		//        }
+		
+		    if ( StringUtils.isNotBlank(  _httpClientConfiguration.getSocketTimeout() ) ||  StringUtils.isNotBlank(  _httpClientConfiguration.getConnectionTimeout() ))
+		    {
+		    	RequestConfig.Builder requestConfiguilder = RequestConfig.custom();
+		    	 if(StringUtils.isNotBlank(   _httpClientConfiguration.getConnectionTimeout()))
+		    	 {
+		    		 requestConfiguilder.setConnectTimeout(Timeout.ofMilliseconds(( Integer.parseInt(  _httpClientConfiguration.getConnectionTimeout() ))));
+		    		 
+		    	 }
+		    	 
+		    	 if(StringUtils.isNotBlank(  _httpClientConfiguration.getSocketTimeout() ))
+		    	 {
+		    		
+		    		 requestConfiguilder.setResponseTimeout(Timeout.ofMilliseconds(( Integer.parseInt(  _httpClientConfiguration.getSocketTimeout() ))));
+		    		
+		    		 
+		    	 }
+		    	 clientBuilder.setDefaultRequestConfig(requestConfiguilder.build());
+		    	 //follow redirect
+		         clientBuilder.setRedirectStrategy(DefaultRedirectStrategy.INSTANCE);
         }
 
         
-        //follow redirect
-        clientBuilder.setRedirectStrategy(DefaultRedirectStrategy.INSTANCE);
        
-        
+       
 
-        return clientBuilder.build();
+        _httpClient =clientBuilder.build();
+      }
+    	
+        return _httpClient;
     }
 
     /**
