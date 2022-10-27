@@ -169,12 +169,12 @@ public class HttpAccessService implements ResponseStatusValidator
      *            The method
      * @return An HTTP client authenticated
      */
-    public synchronized CloseableHttpClient  getHttpClient(  String strTargetHost,boolean bForceReinit )
+    public synchronized CloseableHttpClient  getHttpClient(  String strTargetHost)
     {
     	
     	
-      if(_httpClient==null || bForceReinit)
-      {
+//      if(_httpClient==null || bForceReinit)
+//      {
 			HttpClientBuilder clientBuilder = HttpClients.custom();
 			
 		
@@ -212,6 +212,8 @@ public class HttpAccessService implements ResponseStatusValidator
 		               
 		    	  }
 		            clientBuilder.setConnectionManager(_connectionManager);
+		            clientBuilder.setConnectionManagerShared(true);   
+		         
 		        
 		     }
 		//     
@@ -273,7 +275,7 @@ public class HttpAccessService implements ResponseStatusValidator
        
 
         _httpClient =clientBuilder.build();
-      }
+    //  }
     	
         return _httpClient;
     }

@@ -949,7 +949,7 @@ public class HttpAccess
     	
     	try  {
     		
-    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost(),false);
+    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost());
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 
 				int nResponse = response.getCode();
@@ -1009,7 +1009,7 @@ public class HttpAccess
     	
     	
     	try  {
-    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost(),false);
+    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost());
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 				
 				int nResponse = response.getCode();
@@ -1066,7 +1066,7 @@ public class HttpAccess
    	
          try {
         	 
-        	 CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost(),false);
+        	 CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost());
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 				
 				int nResponse = response.getCode();
@@ -1254,8 +1254,8 @@ public class HttpAccess
     private String getResponseBody( HttpUriRequestBase httpRequest,String strUrl,Map<String,String> mapResponseHeader ) throws HttpAccessException
     {
     	String strResponseBody= StringUtils.EMPTY;
-		try {
-			CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost(),false);
+		try (	CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost());){
+		
 			try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
 
 				int nResponse = response.getCode();
