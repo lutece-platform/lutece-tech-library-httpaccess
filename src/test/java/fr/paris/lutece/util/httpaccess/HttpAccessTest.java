@@ -59,8 +59,8 @@ public class HttpAccessTest
 		String strUrlTestHttp="https://httpbin.org/anything";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -99,8 +99,8 @@ public class HttpAccessTest
 		String strUrlTestHttp="https://httpbin.org/anything?id_delete=125";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -139,8 +139,8 @@ public class HttpAccessTest
 		String strUrlTestHttp="https://httpbin.org/anything";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("10000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(10000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -179,8 +179,8 @@ public class HttpAccessTest
 		String strUrlTestHttp="https://httpbin.org/anything?id_put=125";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("10000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(10000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -225,8 +225,8 @@ public class HttpAccessTest
         String strUrlTestHttp="https://httpbin.org/anything";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -287,7 +287,7 @@ public class HttpAccessTest
 		String strJson= "{\n"
 				+ "  \"identity_change\" : {\n"
 				+ "    \"identity\" : {\n"
-				+ "    \"customer_id\" : \"b59f9424-6c5f-4bc7-a6c7-efd1e29655d4\",\n"
+				+ "    \"customer_id\" : \"b59f9424-6c5f-4bc7-a12545\",\n"
 				+ "    \"attributes\" : {\n"
 				+ "      \"birthcountry\" : {\n"
 				+ "        \"key\" : \"birthcountry\",\n"
@@ -307,7 +307,7 @@ public class HttpAccessTest
 				+ "      \"birthdate\" : {\n"
 				+ "        \"key\" : \"birthdate\",\n"
 				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"24/08/1962\",\n"
+				+ "        \"value\" : \"24/08/1982\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
 				+ "        \"date_last_update\" : 1622468105000,\n"
 				+ "        \"certified\" : true,\n"
@@ -382,7 +382,7 @@ public class HttpAccessTest
 				+ "      \"first_name\" : {\n"
 				+ "        \"key\" : \"first_name\",\n"
 				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"Angela Claire Louise\",\n"
+				+ "        \"value\" : \"Angela Claire Louise Bernard\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
 				+ "        \"date_last_update\" : 1622468105000,\n"
 				+ "        \"certified\" : true,\n"
@@ -423,7 +423,7 @@ public class HttpAccessTest
 				+ "      \"fc_given_name\" : {\n"
 				+ "        \"key\" : \"fc_given_name\",\n"
 				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"Angela Claire Louise 3\",\n"
+				+ "        \"value\" : \"Angela Claire Louise Bernard 3\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
 				+ "        \"date_last_update\" : 1622468105000,\n"
 				+ "        \"certified\" : true,\n"
@@ -512,8 +512,8 @@ public class HttpAccessTest
         String strUrlTestHttp="https://httpbin.org/anything";
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -560,8 +560,8 @@ public class HttpAccessTest
 	    String strUrl="https://www.paris.fr/favicon-16x16.png";
 	
 	    HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -583,8 +583,8 @@ public class HttpAccessTest
 	    String strUrl="https://www.paris.fr/favicon-16x16.png";
 	
 	    HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("1000");
-		configuration.setSocketTimeout("10000");
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
@@ -609,14 +609,14 @@ public class HttpAccessTest
 		
 		
 		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout("10000");
-		configuration.setSocketTimeout("100000");
+		configuration.setConnectionTimeout(10000);
+		configuration.setSocketTimeout(100000);
 		configuration.setProxyHost("192.168.64.41");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
 		configuration.setConnectionPoolEnabled(true);
-		configuration.setConnectionPoolMaxTotalConnection("3");
-		configuration.setConnectionPoolMaxConnectionPerHost("3");
+		configuration.setConnectionPoolMaxTotalConnection(3);
+		configuration.setConnectionPoolMaxConnectionPerHost(3);
 		
 		
 		Map<String,String> mapHeaders=new HashMap<String, String>();

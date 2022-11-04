@@ -76,8 +76,9 @@ import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.util.signrequest.AuthenticateRequestInformations;
 import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
+
 /**
- * Http net Object Accessor
+ * Http net Object Accessor.
  */
 public class HttpAccess
 {
@@ -104,9 +105,7 @@ public class HttpAccess
     /** The Constant PROPERTY_HEADER_CONTENT_TYPE. */
     private static final String PROPERTY_HEADER_CONTENT_TYPE = "Content-Type";
 
-    /** The Constant PROPERTY_CONTENT_CHARSET. */
-    private static final String PROPERTY_CONTENT_CHARSET = "httpAccess.contentCharset";
-
+  
     /** The Constant PROPERTY_HTTP_REQUEST_POST. */
     private static final String PROPERTY_HTTP_REQUEST_POST = "POST";
 
@@ -117,15 +116,26 @@ public class HttpAccess
     /** The Constant DEFAULT_CHARSET. */
     private static final String DEFAULT_CHARSET = "UTF-8";
 
+    /** The response validator. */
     private ResponseStatusValidator _responseValidator;
+    
+    /** The access service. */
     private HttpAccessService _accessService;
 
+    /**
+     * Instantiates a new http access.
+     */
     public HttpAccess( )
     {
         _accessService = HttpAccessService.getInstance( );
         _responseValidator = HttpAccessService.getInstance( );
     }
 
+    /**
+     * Instantiates a new http access.
+     *
+     * @param validator the validator
+     */
     public HttpAccess( ResponseStatusValidator validator )
     {
         _accessService = HttpAccessService.getInstance( );
@@ -133,11 +143,29 @@ public class HttpAccess
     }
     
     
+    /**
+     * Instantiates a new http access.
+     *
+     * @param accessService the access service
+     * @param validator the validator
+     */
     public HttpAccess(  HttpAccessService accessService,ResponseStatusValidator validator)
     {
         _accessService = accessService;
         _responseValidator =validator;
     }
+    
+    /**
+     * Instantiates a new http access.
+     *
+     * @param accessService the access service
+     */
+    public HttpAccess(  HttpAccessService accessService)
+    {
+        _accessService = accessService;
+        _responseValidator =HttpAccessService.getInstance( );
+    }
+    
     
 
 
@@ -810,21 +838,15 @@ public class HttpAccess
     /**
      * Send a POST or PUT HTTP request to an url and return the response content.
      *
-     * @param strUrl
-     *            the url to access
-     * @param params
-     *            the list of parameters to post
-     * @param authenticator
-     *            The {@link RequestAuthenticator}
-     * @param listElements
-     *            to include in the signature
-     * @param headersRequest
-     *            Map of headers request parameters
-     * @param headersResponse
-     *            Map to contain response headers
+     * @param httprequestBase the httprequest base
+     * @param strUrl            the url to access
+     * @param params            the list of parameters to post
+     * @param authenticator            The {@link RequestAuthenticator}
+     * @param listElements            to include in the signature
+     * @param headersRequest            Map of headers request parameters
+     * @param headersResponse            Map to contain response headers
      * @return The response content of the Post request to the given Url
-     * @throws HttpAccessException
-     *             if there is a problem to access to the given Url
+     * @throws HttpAccessException             if there is a problem to access to the given Url
      */
     private String doSendFormEntity( HttpUriRequestBase httprequestBase,String strUrl, Map<String, String> params, RequestAuthenticator authenticator, List<String> listElements,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
@@ -1145,15 +1167,14 @@ public class HttpAccess
     }
 
     /**
-     * Validate an HTTP response status code
-     * 
-     * @param nResponseStatus
-     *            The response status
-     * @param method
-     *            The HTTP method
-     * @param strCurrentAction
-     * @throws HttpAccessException
-     * @throws ParseException 
+     * Validate an HTTP response status code.
+     *
+     * @param nResponseStatus            The response status
+     * @param strMethodName the str method name
+     * @param response the response
+     * @param strUrl the str url
+     * @throws HttpAccessException the http access exception
+     * @throws ParseException the parse exception
      */
     private void validateResponseStatus( int nResponseStatus,String strMethodName, CloseableHttpResponse response, String strUrl ) throws HttpAccessException, ParseException
     {
@@ -1182,14 +1203,11 @@ public class HttpAccess
     }
 
     /**
-     * Throws a new HttpAccess exception
-     * 
-     * @param strUrl
-     *            The URL concerned by the original exception
-     * @param exception
-     *            the original exception
-     * @throws HttpAccessException
-     *             The exception throwned
+     * Throws a new HttpAccess exception.
+     *
+     * @param strUrl            The URL concerned by the original exception
+     * @param exception            the original exception
+     * @throws HttpAccessException             The exception throwned
      */
     private void throwHttpAccessException( String strUrl, Exception exception ) throws HttpAccessException
     {
@@ -1199,9 +1217,9 @@ public class HttpAccess
     }
 
     /**
-     * Hide end of url if the keyword "password" appears in parameters
+     * Hide end of url if the keyword "password" appears in parameters.
      *
-     * @param strUrl
+     * @param strUrl the str url
      * @return the url stripped
      */
     private String stripPassword( String strUrl )
@@ -1218,6 +1236,14 @@ public class HttpAccess
     
     
     
+    /**
+     * Add the security information in the request
+     *
+     * @param httpRequest the http request
+     * @param strTargetUrl the target url of the request
+     * @param authenticator the authenticator
+     * @param listElements the list of elements used by sthe authenticator
+     */
     private void addSecurityInformations(HttpUriRequestBase httpRequest,String strTargetUrl,RequestAuthenticator authenticator,List<String> listElements)
     {
     	
@@ -1251,10 +1277,19 @@ public class HttpAccess
     }
     
     
+    /**
+     * Gets the response body.
+     *
+     * @param httpRequest the http request
+     * @param strUrl the str url
+     * @param mapResponseHeader the map response header
+     * @return the response body
+     * @throws HttpAccessException the http access exception
+     */
     private String getResponseBody( HttpUriRequestBase httpRequest,String strUrl,Map<String,String> mapResponseHeader ) throws HttpAccessException
     {
     	String strResponseBody= StringUtils.EMPTY;
-		try (	CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost());){
+		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost())){
 		
 			try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
 

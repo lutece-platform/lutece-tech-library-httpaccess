@@ -44,9 +44,10 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.util.Timeout;
 
+import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
-// TODO: Auto-generated Javadoc
+
 /**
  * HttpAccessService.
  */
@@ -173,8 +174,6 @@ public class HttpAccessService implements ResponseStatusValidator
     {
     	
     	
-//      if(_httpClient==null || bForceReinit)
-//      {
 			HttpClientBuilder clientBuilder = HttpClients.custom();
 			
 		
@@ -198,70 +197,37 @@ public class HttpAccessService implements ResponseStatusValidator
 		    	  {
 		    		  _connectionManager= new PoolingHttpClientConnectionManager();
 		        	
-		                if ( !StringUtils.isEmpty( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost() ) )
+		                if (_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost() !=null )
 		                {
-		                	_connectionManager.setDefaultMaxPerRoute(Integer.parseInt(_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost()));
+		                	_connectionManager.setDefaultMaxPerRoute(_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost());
 		                	
 		                
 		                }
 		
-		                if ( !StringUtils.isEmpty( _httpClientConfiguration.getConnectionPoolMaxTotalConnection() ) )
+		                if (  _httpClientConfiguration.getConnectionPoolMaxTotalConnection() !=null )
 		                {
-		                	_connectionManager.setMaxTotal( Integer.parseInt(  _httpClientConfiguration.getConnectionPoolMaxTotalConnection() ) );
+		                	_connectionManager.setMaxTotal(   _httpClientConfiguration.getConnectionPoolMaxTotalConnection()  );
 		                }
 		               
 		    	  }
 		            clientBuilder.setConnectionManager(_connectionManager);
 		            clientBuilder.setConnectionManagerShared(true);   
-		         
 		        
 		     }
-		//     
-		//        Credentials cred = null;
-		//
-		//        // If hostname and domain name found, consider we are in NTLM authentication scheme
-		//        // else if only username and password found, use simple UsernamePasswordCredentials
-		//        if ( StringUtils.isNotBlank( _strHostName ) && StringUtils.isNotBlank( _strDomainName ) )
-		//        {
-		//            cred = new NTCredentials( _strProxyUserName, _strProxyPassword, _strHostName, _strDomainName );
-		//        }
-		//        else
-		//            if ( StringUtils.isNotBlank( _strProxyUserName ) && StringUtils.isNotBlank( _strProxyPassword ) )
-		//            {
-		//                cred = new UsernamePasswordCredentials( _strProxyUserName, _strProxyPassword );
-		//            }
-		//
-		//        if ( ( cred != null ) && !bNoProxy )
-		//        {
-		//            AuthScope authScope = new AuthScope( _strProxyHost, Integer.parseInt( _strProxyPort ), _strRealm );
-		//            client.getState( ).setProxyCredentials( authScope, cred );
-		//            client.getParams( ).setAuthenticationPreemptive( true );
-		//            method.setDoAuthentication( true );
-		//        }
-		
-		//        if ( StringUtils.isNotBlank( _strContentCharset ) )
-		//        {
-		//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_CONTENT_CHARSET, _strContentCharset );
-		//        }
-		//
-		//        if ( StringUtils.isNotBlank( _strElementCharset ) )
-		//        {
-		//            client.getParams( ).setParameter( PROPERTY_HTTP_PROTOCOLE_ELEMENT_CHARSET, _strElementCharset );
-		//        }
-		
-		    if ( StringUtils.isNotBlank(  _httpClientConfiguration.getSocketTimeout() ) ||  StringUtils.isNotBlank(  _httpClientConfiguration.getConnectionTimeout() ))
+
+		    if (  _httpClientConfiguration.getSocketTimeout() != null  ||    _httpClientConfiguration.getConnectionTimeout() != null  )
 		    {
 		    	RequestConfig.Builder requestConfiguilder = RequestConfig.custom();
-		    	 if(StringUtils.isNotBlank(   _httpClientConfiguration.getConnectionTimeout()))
+		    	 if(  _httpClientConfiguration.getConnectionTimeout()!=null)
 		    	 {
-		    		 requestConfiguilder.setConnectTimeout(Timeout.ofMilliseconds(( Integer.parseInt(  _httpClientConfiguration.getConnectionTimeout() ))));
+		    		 requestConfiguilder.setConnectTimeout(Timeout.ofMilliseconds(  _httpClientConfiguration.getConnectionTimeout() ));
 		    		 
 		    	 }
 		    	 
-		    	 if(StringUtils.isNotBlank(  _httpClientConfiguration.getSocketTimeout() ))
+		    	 if( _httpClientConfiguration.getSocketTimeout() != null )
 		    	 {
 		    		
-		    		 requestConfiguilder.setResponseTimeout(Timeout.ofMilliseconds(( Integer.parseInt(  _httpClientConfiguration.getSocketTimeout() ))));
+		    		 requestConfiguilder.setResponseTimeout(Timeout.ofMilliseconds( _httpClientConfiguration.getSocketTimeout() ));
 		    		
 		    		 
 		    	 }
@@ -270,12 +236,10 @@ public class HttpAccessService implements ResponseStatusValidator
 		         clientBuilder.setRedirectStrategy(DefaultRedirectStrategy.INSTANCE);
         }
 
-        
-       
        
 
         _httpClient =clientBuilder.build();
-    //  }
+    
     	
         return _httpClient;
     }
@@ -384,12 +348,49 @@ public class HttpAccessService implements ResponseStatusValidator
         _httpClientConfiguration.setNoProxyFor (AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR ));
         _httpClientConfiguration.setContentCharset (AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET ));
         _httpClientConfiguration.setElementCharset ( AppPropertiesService.getProperty( PROPERTY_ELEMENT_CHARSET ));
-        _httpClientConfiguration.setSocketTimeout (AppPropertiesService.getProperty( PROPERTY_SOCKET_TIMEOUT ));
-        _httpClientConfiguration.setConnectionTimeout (AppPropertiesService.getProperty( PROPERTY_CONNECTION_TIMEOUT ));
         _httpClientConfiguration.setConnectionPoolEnabled ( AppPropertiesService.getPropertyBoolean( PROPERTY_CONNECTION_POOL_ENABLED, false ));
-        _httpClientConfiguration.setConnectionPoolMaxTotalConnection (AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION) );
-        _httpClientConfiguration.setConnectionPoolMaxConnectionPerHost (AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST ));
-    }
+        
+		try {
+			_httpClientConfiguration.setSocketTimeout(AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT) != null
+					? Integer.parseInt(AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT))
+					: null);
+
+		} catch (NumberFormatException e) {
+			AppLogService.error("Error during initialisation of socket timeout ", e);
+		}
+
+		try {
+			_httpClientConfiguration
+					.setConnectionTimeout(AppPropertiesService.getProperty(PROPERTY_CONNECTION_TIMEOUT) != null
+							? Integer.parseInt(AppPropertiesService.getProperty(PROPERTY_CONNECTION_TIMEOUT))
+							: null);
+
+		} catch (NumberFormatException e) {
+			AppLogService.error("Error during initialisation of connection timeout ", e);
+		}
+		try {
+			_httpClientConfiguration.setConnectionPoolMaxTotalConnection(
+					AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION) != null
+							? Integer.parseInt(
+									AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION))
+							: null);
+
+		} catch (NumberFormatException e) {
+			AppLogService.error("Error during initialisation of Connection Pool Maxt Total Connection ", e);
+		}
+		try {
+			_httpClientConfiguration.setConnectionPoolMaxConnectionPerHost(
+					AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST) != null
+							? Integer.parseInt(AppPropertiesService
+									.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST))
+							: null);
+
+		} catch (NumberFormatException e) {
+			AppLogService.error("Error during initialisation of Connection Pool Maxt Total Connection Per Host ", e);
+		}
+       
+        
+        }
 
     /**
      * Default Response status Validation
