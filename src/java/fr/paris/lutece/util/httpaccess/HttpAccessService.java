@@ -149,7 +149,10 @@ public class HttpAccessService implements ResponseStatusValidator
 
         return _singleton;
     }
-    
+    /**
+     * create new specific Instance of HttpAccessService 
+     * @param httpClienConfiguration the httpClienConfiguration
+     */
     public HttpAccessService(HttpClientConfiguration httpClienConfiguration)
     {
     	super();

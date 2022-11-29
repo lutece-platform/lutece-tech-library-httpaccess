@@ -12,17 +12,21 @@
   </Appenders>
   <Loggers>
     <Logger name="org.apache.hc.client5.http" level="ERROR">
-      <AppenderRef ref="HttpLogFile"/>
+      <AppenderRef ref="Console"/>
     </Logger>
-    <Logger name="org.apache.hc.client5.http.wire" level="DEBUG">
-      <AppenderRef ref="HttpLogFile"/>
+    <Logger name="org.apache.hc.client5.http.wire" level="ERROR">
+      <AppenderRef ref="Console"/>
     </Logger>
-     <Logger name="org.apache.hc.client5.http.headers" level="DEBUG">
-      <AppenderRef ref="HttpLogFile"/>
+     <Logger name="org.apache.hc.client5.http.headers" level="ERROR">
+      <AppenderRef ref="Console"/>
     </Logger>
-     <Logger name="org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager" level="DEBUG">
-    		<AppenderRef ref="HttpLogFile"/>
+     <Logger name="org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager" level="ERROR">
+    		<AppenderRef ref="Console"/>
     </Logger>
+    <Logger name="fr.paris.lutece.util.httpaccess.HttpAccessTest" level="DEBUG">
+    		<AppenderRef ref="Console"/>
+    </Logger>
+    
     
     <Root level="INFO">
       <AppenderRef ref="Console" />

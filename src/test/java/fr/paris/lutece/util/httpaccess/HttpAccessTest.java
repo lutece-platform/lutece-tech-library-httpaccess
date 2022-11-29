@@ -33,6 +33,10 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,613 +45,465 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.fileupload.FileItem;
+import org.apache.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
 /**
  * Http net Object Accessor
  */
-public class HttpAccessTest 
-{
-	
+public class HttpAccessTest {
+
+	private MockWebServer mockWebServer;
+	private ObjectMapper _objectMapper = new ObjectMapper();
+	private Logger _logger = Logger.getLogger(this.getClass());
+
 	@Test
-	public void testDoGet()
-	{
-	
-		
-		String strUrlTestHttp="https://httpbin.org/anything";
-		
-		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout(1000);
-		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
-		configuration.setNoProxyFor("*.paris.mdp");
-		configuration.setProxyPort("8080");
-		
-		Map<String,String> mapHeaders=new HashMap<String, String>();
-		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
-		
-		
-		mapHeaders.put("Authorization", " Basic token");
-		
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		
-		
-		
-		try {
-			String strTest=httpAccess.doGet(strUrlTestHttp, null,null, mapHeaders, mapHeadersResponse);
-			System.out.println("*************************************");
-			System.out.println(strTest);
-			System.out.println("*************************************");
-			
-			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
-		} catch (HttpAccessException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e);
-		}
-		
-	}
-	
-	@Test
-	public void testDoDelete()
-	{
-	
-		
-		String strUrlTestHttp="https://httpbin.org/anything?id_delete=125";
-		
-		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout(1000);
-		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
-		configuration.setNoProxyFor("*.paris.mdp");
-		configuration.setProxyPort("8080");
-		
-		Map<String,String> mapHeaders=new HashMap<String, String>();
-		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
-		
-		
-		mapHeaders.put("Authorization", " Basic token");
-		
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		
-		
-		
-		try {
-			String strTest=httpAccess.doDelete(strUrlTestHttp, null,null, mapHeaders, mapHeadersResponse);
-			System.out.println("*************************************");
-			System.out.println(strTest);
-			System.out.println("*************************************");
-			
-			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
-		} catch (HttpAccessException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e);
-		}
-		
-	}
-	
-	
-	@Test
-	public void testDoPost()
-	{
-	
-		String strUrlTestHttp="https://httpbin.org/anything";
-		
-		HttpClientConfiguration configuration=new HttpClientConfiguration();
+	public void testDoGet() throws IOException, HttpAccessException {
+
+		String strUrlTestHttp = mockWebServer.url("/test?param1=1&parma2=2").toString();
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
 		configuration.setConnectionTimeout(10000);
 		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
-		configuration.setNoProxyFor("*.paris.mdp");
-		configuration.setProxyPort("8080");
-		
-		Map<String,String> mapHeaders=new HashMap<String, String>();
-		Map<String,String> mapParameters=new HashMap<String, String>();
-		
-		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
-		
-		
-		mapHeaders.put("Authorization", " Basic ");
-		mapParameters.put("grant_type", "client_credentials");
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		
-		
-		
-		try {
-			String strTest=httpAccess.doPost(strUrlTestHttp, mapParameters, null, null, mapHeaders, mapHeadersResponse);
-			System.out.println(strTest);
-			
-			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
-		} catch (HttpAccessException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e);
-		}
-		
+		// configuration.setProxyHost("");
+		// configuration.setNoProxyFor("*.paris.mdp");
+		// configuration.setProxyPort("8080");
+
+		Map<String, String> mapHeaders = new HashMap<String, String>();
+		Map<String, String> mapHeadersResponse = new HashMap<String, String>();
+
+		mapHeaders.put("Authorization", " Basic token");
+
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+
+		String strTest = httpAccess.doGet(strUrlTestHttp, null, null, mapHeaders, mapHeadersResponse);
+
+		HttpRequestResult jsonRespone = _objectMapper.readValue(strTest, HttpRequestResult.class);
+		assertEquals("GET", jsonRespone.getMethodName());
+		_logger.debug(strTest);
+
 	}
-	
-	
+
 	@Test
-	public void testDoPut()
-	{
-	
-		String strUrlTestHttp="https://httpbin.org/anything?id_put=125";
-		
-		HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout(10000);
-		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
-		configuration.setNoProxyFor("*.paris.mdp");
-		configuration.setProxyPort("8080");
-		
-		Map<String,String> mapHeaders=new HashMap<String, String>();
-		Map<String,String> mapParameters=new HashMap<String, String>();
-		
-		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
-		
-		
-		mapHeaders.put("Authorization", " Basic ");
-		mapParameters.put("grant_type", "client_credentials");
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		
-		
-		
-		try {
-			String strTest=httpAccess.doPut(strUrlTestHttp, null,null,mapParameters, mapHeaders, mapHeadersResponse);
-			System.out.println(strTest);
-			
-			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
-		} catch (HttpAccessException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e);
-		}
-		
-	}
-	
-	
-	
-	
-	
-	
-	
-	@Test
-	public void testDoPostMultipart() throws UnsupportedEncodingException		
-	{
-		
-		
-        String strUrlTestHttp="https://httpbin.org/anything";
-		
-		HttpClientConfiguration configuration=new HttpClientConfiguration();
+	public void testDoDelete() throws IOException, HttpAccessException {
+
+		String strUrlTestHttp = mockWebServer.url("test?id_delete=125").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
 		configuration.setConnectionTimeout(1000);
 		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
+		// configuration.setProxyHost("");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
-		
-		Map<String,String> mapHeaders=new HashMap<String, String>();
-	
-		   Map<String, List<String>> mapParameters = new HashMap<String, List<String>>( );
-		List<String> params=new ArrayList<String>();
+
+		Map<String, String> mapHeaders = new HashMap<String, String>();
+		Map<String, String> mapHeadersResponse = new HashMap<String, String>();
+
+		mapHeaders.put("Authorization", " Basic token");
+
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+		String strTest = httpAccess.doDelete(strUrlTestHttp, null, null, mapHeaders, mapHeadersResponse);
+		HttpRequestResult jsonRespone = _objectMapper.readValue(strTest, HttpRequestResult.class);
+		assertEquals("DELETE", jsonRespone.getMethodName());
+		_logger.debug(strTest);
+	}
+
+	@Test
+	public void testDoPost() throws IOException, HttpAccessException {
+
+		String strUrlTestHttp = mockWebServer.url("/test").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
+		configuration.setConnectionTimeout(10000);
+		configuration.setSocketTimeout(10000);
+		// configuration.setProxyHost("");
+		configuration.setNoProxyFor("*.paris.mdp");
+		configuration.setProxyPort("8080");
+
+		Map<String, String> mapHeaders = new HashMap<String, String>();
+		Map<String, String> mapParameters = new HashMap<String, String>();
+
+		Map<String, String> mapHeadersResponse = new HashMap<String, String>();
+
+		mapHeaders.put("Authorization", " Basic ");
+		mapParameters.put("grant_type", "client_credentials");
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+		String strTest = httpAccess.doPost(strUrlTestHttp, mapParameters, null, null, mapHeaders, mapHeadersResponse);
+		HttpRequestResult jsonRespone = _objectMapper.readValue(strTest, HttpRequestResult.class);
+		assertEquals("POST", jsonRespone.getMethodName());
+		_logger.debug(strTest);
+
+	}
+
+	@Test
+	public void testDoPut() throws HttpAccessException, JsonMappingException, JsonProcessingException {
+
+		String strUrlTestHttp = mockWebServer.url("/test/225").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
+		configuration.setConnectionTimeout(10000);
+		configuration.setSocketTimeout(10000);
+		// configuration.setProxyHost("");
+		configuration.setNoProxyFor("*.paris.mdp");
+		configuration.setProxyPort("8080");
+
+		Map<String, String> mapHeaders = new HashMap<String, String>();
+		Map<String, String> mapParameters = new HashMap<String, String>();
+
+		Map<String, String> mapHeadersResponse = new HashMap<String, String>();
+
+		mapHeaders.put("Authorization", " Basic ");
+		mapParameters.put("grant_type", "client_credentials");
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+
+		String strTest = httpAccess.doPut(strUrlTestHttp, null, null, mapParameters, mapHeaders, mapHeadersResponse);
+		HttpRequestResult jsonRespone = _objectMapper.readValue(strTest, HttpRequestResult.class);
+		assertEquals("PUT", jsonRespone.getMethodName());
+		_logger.debug(strTest);
+
+	}
+
+	@Test
+	public void testDoPostMultipart()
+			throws UnsupportedEncodingException, HttpAccessException, JsonMappingException, JsonProcessingException {
+
+		String strUrlTestHttp = mockWebServer.url("/test").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
+		// configuration.setProxyHost("");
+		configuration.setNoProxyFor("*.paris.mdp");
+		configuration.setProxyPort("8080");
+
+		Map<String, String> mapHeaders = new HashMap<String, String>();
+
+		Map<String, List<String>> mapParameters = new HashMap<String, List<String>>();
+		List<String> params = new ArrayList<String>();
 		params.add("test1 é");
 		params.add("test2");
-		
-		mapParameters.put( "identityChange", params);
-		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
-		
-		
-		//mapHeaders.put("Content-Type", "application/json; charset=utf-8");
+
+		mapParameters.put("identityChange", params);
+		Map<String, String> mapHeadersResponse = new HashMap<String, String>();
+
+		// mapHeaders.put("Content-Type", "application/json; charset=utf-8");
 		mapHeaders.put("client_code", "RhssoFranceConnect");
-		
-		//mapParameters.put("grant_type", "client_credentials");
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		String strXml="<xml> éttezez</xml>";
-		
-		
-		MemoryFileItem meFileItem=new MemoryFileItem(strXml.getBytes("UTF-8"), "test_file.xml", strXml.getBytes("UTF-8").length, "text/xml; charset=UTF-8");
-		
-		
-		Map<String,FileItem> mapFileItem=new HashMap();
-		
-		
-		mapFileItem.put("file_download_param_1",meFileItem);
-		
-		
-		
-		try {
-			String strTest=httpAccess.doPostMultiPart(strUrlTestHttp, mapParameters, mapFileItem, null, null, mapHeadersResponse, mapHeadersResponse);
-			System.out.println(strTest);
-			
-			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
-		} catch (HttpAccessException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e);
-		}
-		
-		
+
+		// mapParameters.put("grant_type", "client_credentials");
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+
+		String strXml = "<xml> éttezez</xml>";
+
+		MemoryFileItem meFileItem = new MemoryFileItem(strXml.getBytes("UTF-8"), "test_file.xml",
+				strXml.getBytes("UTF-8").length, "text/xml; charset=UTF-8");
+
+		Map<String, FileItem> mapFileItem = new HashMap();
+
+		mapFileItem.put("file_download_param_1", meFileItem);
+
+		String strTest = httpAccess.doPostMultiPart(strUrlTestHttp, mapParameters, mapFileItem, null, null,
+				mapHeadersResponse, mapHeadersResponse);
+		HttpRequestResult jsonRespone = _objectMapper.readValue(strTest, HttpRequestResult.class);
+		assertEquals("POST", jsonRespone.getMethodName());
+		_logger.debug(strTest);
+
 	}
-	
-	
-	
-	
-	
-	
 
 	@Test
-	public void testDoPostJson()		
-	{
-		String strJson= "{\n"
-				+ "  \"identity_change\" : {\n"
-				+ "    \"identity\" : {\n"
-				+ "    \"customer_id\" : \"b59f9424-6c5f-4bc7-a12545\",\n"
-				+ "    \"attributes\" : {\n"
-				+ "      \"birthcountry\" : {\n"
-				+ "        \"key\" : \"birthcountry\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"FRANCE\",\n"
+	public void testDoPostJson() throws HttpAccessException, JsonMappingException, JsonProcessingException {
+		String strJson = "{\n" + "  \"identity_change\" : {\n" + "    \"identity\" : {\n"
+				+ "    \"customer_id\" : \"b59f9424-6c5f-4bc7-a12545\",\n" + "    \"attributes\" : {\n"
+				+ "      \"birthcountry\" : {\n" + "        \"key\" : \"birthcountry\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"FRANCE\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"birthdate\" : {\n"
-				+ "        \"key\" : \"birthdate\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"24/08/1982\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"birthdate\" : {\n" + "        \"key\" : \"birthdate\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"24/08/1982\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"gender\" : {\n"
-				+ "        \"key\" : \"gender\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"1\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"gender\" : {\n" + "        \"key\" : \"gender\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"1\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"birthplace\" : {\n"
-				+ "        \"key\" : \"birthplace\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"PARIS 07\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"birthplace\" : {\n" + "        \"key\" : \"birthplace\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"PARIS 07\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"login\" : {\n"
-				+ "        \"key\" : \"login\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"testbp2022@yopmail.com\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"login\" : {\n" + "        \"key\" : \"login\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"testbp2022@yopmail.com\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"family_name\" : {\n"
-				+ "        \"key\" : \"family_name\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"DUBOIS\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"family_name\" : {\n" + "        \"key\" : \"family_name\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"DUBOIS\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"first_name\" : {\n"
-				+ "        \"key\" : \"first_name\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"Angela Claire Louise Bernard\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"first_name\" : {\n" + "        \"key\" : \"first_name\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"Angela Claire Louise Bernard\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"email\" : {\n"
-				+ "        \"key\" : \"email\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"testbp2022@yopmail.com\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"email\" : {\n" + "        \"key\" : \"email\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"testbp2022@yopmail.com\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : false,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : null\n"
-				+ "      },\n"
-				+ "    \"fc_birthdate\" : {\n"
-				+ "        \"key\" : \"fc_birthdate\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"1962-08-85\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : false,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : null\n" + "      },\n"
+				+ "    \"fc_birthdate\" : {\n" + "        \"key\" : \"fc_birthdate\",\n"
+				+ "        \"type\" : \"string\",\n" + "        \"value\" : \"1962-08-85\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "   \n"
-				+ "      \"fc_given_name\" : {\n"
-				+ "        \"key\" : \"fc_given_name\",\n"
-				+ "        \"type\" : \"string\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "   \n" + "      \"fc_given_name\" : {\n"
+				+ "        \"key\" : \"fc_given_name\",\n" + "        \"type\" : \"string\",\n"
 				+ "        \"value\" : \"Angela Claire Louise Bernard 3\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"fc_birthplace\" : {\n"
-				+ "        \"key\" : \"fc_birthplace\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"75107\",\n"
-				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"fc_birthplace\" : {\n"
+				+ "        \"key\" : \"fc_birthplace\",\n" + "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"75107\",\n" + "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "  \n"
-				+ "      \"fc_gender\" : {\n"
-				+ "        \"key\" : \"fc_gender\",\n"
-				+ "        \"type\" : \"string\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "  \n" + "      \"fc_gender\" : {\n"
+				+ "        \"key\" : \"fc_gender\",\n" + "        \"type\" : \"string\",\n"
 				+ "        \"value\" : \"female\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "     \n"
-				+ "      \"fc_family_name\" : {\n"
-				+ "        \"key\" : \"fc_family_name\",\n"
-				+ "        \"type\" : \"string\",\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "     \n" + "      \"fc_family_name\" : {\n"
+				+ "        \"key\" : \"fc_family_name\",\n" + "        \"type\" : \"string\",\n"
 				+ "        \"value\" : \"DUBOIS\",\n"
 				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "      },\n"
-				+ "      \"fc_birthcountry\" : {\n"
-				+ "        \"key\" : \"fc_birthcountry\",\n"
-				+ "        \"type\" : \"string\",\n"
-				+ "        \"value\" : \"99100\",\n"
-				+ "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
-				+ "        \"date_last_update\" : 1622468105000,\n"
-				+ "        \"certified\" : true,\n"
-				+ "        \"writable\" : true,\n"
-				+ "        \"certificate\" : {\n"
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "      },\n" + "      \"fc_birthcountry\" : {\n"
+				+ "        \"key\" : \"fc_birthcountry\",\n" + "        \"type\" : \"string\",\n"
+				+ "        \"value\" : \"99100\",\n" + "        \"application_last_update\" : \"RhssoFranceConnect\",\n"
+				+ "        \"date_last_update\" : 1622468105000,\n" + "        \"certified\" : true,\n"
+				+ "        \"writable\" : true,\n" + "        \"certificate\" : {\n"
 				+ "          \"certifier_code\" : \"fccertifier\",\n"
 				+ "          \"certifier_name\" : \"France Connect Certifier\",\n"
-				+ "          \"certificate_level\" : 3,\n"
-				+ "          \"certificate_exp_date\" : null\n"
-				+ "        }\n"
-				+ "    }\n"
-				+ "  }\n"
-				+ "}\n"
-				+ ",\n"
-				+ "    \"author\" : {\n"
-				+ "      \"id\" : \"usager\",\n"
-				+ "      \"type\" : 1,\n"
-				+ "      \"application_code\" : \"RhssoFranceConnect\"\n"
-				+ "    }\n"
-				+ "  }\n"
-				+ "}";
-		
-		
-        String strUrlTestHttp="https://httpbin.org/anything";
-		
-		HttpClientConfiguration configuration=new HttpClientConfiguration();
+				+ "          \"certificate_level\" : 3,\n" + "          \"certificate_exp_date\" : null\n"
+				+ "        }\n" + "    }\n" + "  }\n" + "}\n" + ",\n" + "    \"author\" : {\n"
+				+ "      \"id\" : \"usager\",\n" + "      \"type\" : 1,\n"
+				+ "      \"application_code\" : \"RhssoFranceConnect\"\n" + "    }\n" + "  }\n" + "}";
+
+		String strUrlTestHttp = mockWebServer.url("/test").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
 		configuration.setConnectionTimeout(1000);
 		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
+		//configuration.setProxyHost("");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
-		
-		Map<String,String> mapHeaders=new HashMap<String, String>();
-	
-		   Map<String, List<String>> mapParameters = new HashMap<String, List<String>>( );
-		List<String> params=new ArrayList<String>();
+
+		Map<String, String> mapHeaders = new HashMap<String, String>();
+
+		Map<String, List<String>> mapParameters = new HashMap<String, List<String>>();
+		List<String> params = new ArrayList<String>();
 		params.add(strJson);
-		mapParameters.put( "identityChange", params);
-		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
-		
-		
-		//mapHeaders.put("Content-Type", "application/json; charset=utf-8");
+		mapParameters.put("identityChange", params);
+		Map<String, String> mapHeadersResponse = new HashMap<String, String>();
+
+		// mapHeaders.put("Content-Type", "application/json; charset=utf-8");
 		mapHeaders.put("client_code", "RhssoFranceConnect");
-		
-		//mapParameters.put("grant_type", "client_credentials");
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		
-		
-		
-		try {
-			String strTest=httpAccess.doPostJSON(strUrlTestHttp, strJson, mapHeaders, mapHeadersResponse);
-			
-			System.out.println(strTest);
-			
-			mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
-		} catch (HttpAccessException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e);
-		}
-		
-		
-	}
-	
-	
-	
-	@Test
-	public void testDoDownloadFile() throws HttpAccessException
-	{
-	
-	    String strUrl="https://www.paris.fr/favicon-16x16.png";
-	
-	    HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout(1000);
-		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
-		configuration.setNoProxyFor("*.paris.mdp");
-		configuration.setProxyPort("8080");
-		
-		
-		//mapParameters.put("grant_type", "client_credentials");
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		httpAccess.downloadFile(strUrl, "/tmp/favicon-16x16.png");
-	
-	}
-	
-	
-	@Test
-	public void testGetFileName() throws HttpAccessException
-	{
-	
-	    String strUrl="https://www.paris.fr/favicon-16x16.png";
-	
-	    HttpClientConfiguration configuration=new HttpClientConfiguration();
-		configuration.setConnectionTimeout(1000);
-		configuration.setSocketTimeout(10000);
-		configuration.setProxyHost("192.168.64.41");
-		configuration.setNoProxyFor("*.paris.mdp");
-		configuration.setProxyPort("8080");
-		
-		
-		
-		//mapParameters.put("grant_type", "client_credentials");
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-		
-		System.out.println(httpAccess.getFileName(strUrl));
-	
+
+		// mapParameters.put("grant_type", "client_credentials");
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+
+		String strTest = httpAccess.doPostJSON(strUrlTestHttp, strJson, mapHeaders, mapHeadersResponse);
+
+		HttpRequestResult jsonRespone = _objectMapper.readValue(strTest, HttpRequestResult.class);
+		assertEquals("POST", jsonRespone.getMethodName());
+		_logger.debug(strTest);
+
+
 	}
 
-	
 	@Test
-	public void testConnectionPool()
-	{
-	
-		List<Integer> listOfNumbersGet = Arrays.asList(1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20);
-		String strUrlTestHttp="https://httpbin.org/anything";
-		
-		
-		HttpClientConfiguration configuration=new HttpClientConfiguration();
+	public void testDoDownloadFile() throws HttpAccessException {
+
+		String strUrlTestHttp = mockWebServer.url("/test").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
+		configuration.setProxyHost("");
+		configuration.setNoProxyFor("*.paris.mdp");
+		configuration.setProxyPort("8080");
+
+		// mapParameters.put("grant_type", "client_credentials");
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+
+		httpAccess.downloadFile(strUrlTestHttp, "/tmp/favicon-16x16.png");
+
+	}
+
+	@Test
+	public void testGetFileName() throws HttpAccessException {
+
+		String strUrlTestHttp = mockWebServer.url("/test").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
+		configuration.setConnectionTimeout(1000);
+		configuration.setSocketTimeout(10000);
+		configuration.setProxyHost("");
+		configuration.setNoProxyFor("*.paris.mdp");
+		configuration.setProxyPort("8080");
+
+		// mapParameters.put("grant_type", "client_credentials");
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+        
+		 httpAccess.getFileName(strUrlTestHttp);
+
+	}
+
+	@Test
+	public void testConnectionPool() {
+
+		List<Integer> listOfNumbersGet = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+				19, 20);
+		String strUrlTestHttp = mockWebServer.url("/test").toString();
+
+		HttpClientConfiguration configuration = new HttpClientConfiguration();
 		configuration.setConnectionTimeout(10000);
 		configuration.setSocketTimeout(100000);
-		configuration.setProxyHost("192.168.64.41");
+		//onfiguration.setProxyHost("");
 		configuration.setNoProxyFor("*.paris.mdp");
 		configuration.setProxyPort("8080");
 		configuration.setConnectionPoolEnabled(true);
 		configuration.setConnectionPoolMaxTotalConnection(3);
 		configuration.setConnectionPoolMaxConnectionPerHost(3);
+
+		Map<String, String> mapHeaders = new HashMap<String, String>();
+		Map<String, String> mapHeadersResponse = new HashMap<String, String>();
+
+		mapHeaders.put("Authorization", " Basic token with connection pool");
+		HttpAccessService httpAccessService = new HttpAccessService(configuration);
+		listOfNumbersGet.parallelStream().forEach(x -> {
+
 		
-		
-		Map<String,String> mapHeaders=new HashMap<String, String>();
-		Map<String,String> mapHeadersResponse=new HashMap<String, String>();
-		
-		
-		mapHeaders.put("Authorization", " Basic token");
-		HttpAccessService httpAccessService=new HttpAccessService(configuration);
-		listOfNumbersGet.parallelStream().forEach(x-> 
-		{
-				
-				
+
+				HttpAccess httpAccess = new HttpAccess(httpAccessService, new MockResponseStatusValidator());
+
+				String strTest;
 				try {
-					
-					
-					
-					HttpAccess httpAccess=new HttpAccess(httpAccessService,new MockResponseStatusValidator());
-				
-					String strTest=httpAccess.doGet(strUrlTestHttp, null,null, mapHeaders, mapHeadersResponse);
-					System.out.println("*************************************");
-					System.out.println(strTest);
-					System.out.println("*************************************");
-					
-					
-					mapHeadersResponse.forEach((k,v)->System.out.println("***"+k+"***"+v));
+					strTest = httpAccess.doGet(strUrlTestHttp, null, null, mapHeaders, mapHeadersResponse);
+					HttpRequestResult jsonRespone= _objectMapper.readValue(strTest, HttpRequestResult.class);
+					assertEquals("GET", jsonRespone.getMethodName());
+					_logger.debug(strTest);
 				} catch (HttpAccessException e) {
+					assertFalse(true);
+				}
+					
+				catch (JsonProcessingException e) {
 					// TODO Auto-generated catch block
-					System.out.println(e);
+					assertFalse(true);
 				}
 				
-	});
+				
+
+		
+			
+
+		});
 	}
-	
+
+	@Before
+	public void init() throws IOException {
+		this.mockWebServer = new MockWebServer();
+		this.mockWebServer.setDispatcher(new Dispatcher() {
+
+			@Override
+			public MockResponse dispatch(RecordedRequest request) {
+				// wait(3000);
+				return new MockResponse().addHeader("Content-Type", "application/json; charset=utf-8")
+						.setResponseCode(200).setBody(printRequest(request));
+
+			}
+		});
+
+		this.mockWebServer.start(18080);
+
+	}
+
+	@After
+	public void stopServer() throws IOException {
+
+		this.mockWebServer.shutdown();
+	}
+
+	private String printRequest(RecordedRequest request) {
+
+		try {
+			return _objectMapper.writeValueAsString(new HttpRequestResult(request.getMethod(),
+					request.getHeaders().getNamesAndValues$okhttp(), request.getBody().readUtf8(), request.getPath()));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return "";
+
+	}
+
 }
