@@ -354,8 +354,7 @@ public class HttpAccessService implements ResponseStatusValidator
         _httpClientConfiguration.setConnectionPoolEnabled ( AppPropertiesService.getPropertyBoolean( PROPERTY_CONNECTION_POOL_ENABLED, false ));
         
 		try {
-			_httpClientConfiguration.setSocketTimeout(AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT) != null
-					? Integer.parseInt(AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT))
+			_httpClientConfiguration.setSocketTimeout(StringUtils.isNotEmpty( AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT) ) 	? Integer.parseInt(AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT))
 					: null);
 
 		} catch (NumberFormatException e) {
@@ -373,7 +372,7 @@ public class HttpAccessService implements ResponseStatusValidator
 		}
 		try {
 			_httpClientConfiguration.setConnectionPoolMaxTotalConnection(
-					AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION) != null
+					StringUtils.isNotEmpty( AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION) )
 							? Integer.parseInt(
 									AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION))
 							: null);
@@ -383,7 +382,7 @@ public class HttpAccessService implements ResponseStatusValidator
 		}
 		try {
 			_httpClientConfiguration.setConnectionPoolMaxConnectionPerHost(
-					AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST) != null
+					StringUtils.isNotEmpty(  AppPropertiesService.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST) ) 
 							? Integer.parseInt(AppPropertiesService
 									.getProperty(PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST))
 							: null);
