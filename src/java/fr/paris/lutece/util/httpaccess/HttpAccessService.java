@@ -354,7 +354,7 @@ public class HttpAccessService implements ResponseStatusValidator
         _httpClientConfiguration.setConnectionPoolEnabled ( AppPropertiesService.getPropertyBoolean( PROPERTY_CONNECTION_POOL_ENABLED, false ));
         
 		try {
-			_httpClientConfiguration.setSocketTimeout(StringUtils.isNotEmpty( AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT) ) 	? Integer.parseInt(AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT))
+			_httpClientConfiguration.setSocketTimeout( StringUtils.isNotEmpty( AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT) ) 	? Integer.parseInt(AppPropertiesService.getProperty(PROPERTY_SOCKET_TIMEOUT))
 					: null);
 
 		} catch (NumberFormatException e) {
@@ -363,7 +363,7 @@ public class HttpAccessService implements ResponseStatusValidator
 
 		try {
 			_httpClientConfiguration
-					.setConnectionTimeout(AppPropertiesService.getProperty(PROPERTY_CONNECTION_TIMEOUT) != null
+					.setConnectionTimeout( StringUtils.isNotEmpty(  AppPropertiesService.getProperty(PROPERTY_CONNECTION_TIMEOUT) )
 							? Integer.parseInt(AppPropertiesService.getProperty(PROPERTY_CONNECTION_TIMEOUT))
 							: null);
 
