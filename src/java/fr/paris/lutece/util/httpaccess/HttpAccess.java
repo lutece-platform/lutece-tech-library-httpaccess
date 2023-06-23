@@ -111,6 +111,9 @@ public class HttpAccess
 
     /** The Constant PROPERTY_HTTP_REQUEST_PUT. */
     private static final String PROPERTY_HTTP_REQUEST_PUT = "PUT";
+    
+    /** The Constant PROPERTY_HTTP_REQUEST_DELETE. */
+    private static final String PROPERTY_HTTP_REQUEST_DELETE = "DELETE";
 
 
     /** The Constant DEFAULT_CHARSET. */
@@ -390,6 +393,9 @@ public class HttpAccess
             	httpRequest = new HttpPost(strUrl);
                 break;
 
+            case PROPERTY_HTTP_REQUEST_DELETE:
+            	httpRequest = new HttpDelete(strUrl);
+            	break;
             default:
             	httpRequest =  new HttpPost(strUrl);
                 break;
@@ -912,6 +918,32 @@ public class HttpAccess
 		return strResponseBody;
     }
 
+    /**
+     * Send a DELETE HTTP request to an url and return the response content.
+     *
+     * @param strUrl
+     *            the url to access
+     * @param strJson
+     *            the json to send in body
+     * @param authenticator
+     *            The {@link RequestAuthenticator}
+     * @param listElements
+     *            to include in the signature
+     * @param headersRequest
+     *            Map of headers request parameters
+     * @param headersResponse
+     *            Map to contain response headers
+     * @return The response content of the Post request to the given Url
+     * @throws HttpAccessException
+     *             if there is a problem to access to the given Url
+     */
+    public String doDeleteJSON( String strUrl, String strJSON, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
+            Map<String, String> headersResponse ) throws HttpAccessException
+    {
+    	return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_DELETE, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, authenticator, listElements,
+                headersRequest, headersResponse );
+    }
+    
     /**
      * Send a GET HTTP request to an Url and return the response content.
      * 
