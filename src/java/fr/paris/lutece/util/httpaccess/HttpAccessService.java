@@ -173,76 +173,78 @@ public class HttpAccessService implements ResponseStatusValidator
      *            The method
      * @return An HTTP client authenticated
      */
-    public synchronized CloseableHttpClient  getHttpClient(  String strTargetHost)
+    public  CloseableHttpClient  getHttpClient(  String strTargetHost)
     {
     	
-    	
-			HttpClientBuilder clientBuilder = HttpClients.custom();
+            if(_httpClient == null)
+            {
+				HttpClientBuilder clientBuilder = HttpClients.custom();
+				
 			
-		
-		    // bNoProxy will be true when we would normally be using a proxy but matched on the NoProxyFor list
-		  
-		    if ( StringUtils.isNotBlank( _httpClientConfiguration.getProxyHost() ) )
-		    {
-		    	    boolean bNoProxy = ( StringUtils.isNotBlank( _httpClientConfiguration.getNoProxyFor() ) && matchesList( _httpClientConfiguration.getNoProxyFor().split( SEPARATOR ), strTargetHost) );
-		            if(!bNoProxy && StringUtils.isNotBlank( _httpClientConfiguration.getProxyPort() ) && StringUtils.isNumeric( _httpClientConfiguration.getProxyPort() ))
-		            {
-		            	final HttpHost proxy = new HttpHost("http", _httpClientConfiguration.getProxyHost(),Integer.parseInt( _httpClientConfiguration.getProxyPort()));
-		            	clientBuilder.setProxy(proxy);
-		            }
-		        
-		    }
-		
-		    if ( _httpClientConfiguration.isConnectionPoolEnabled() )
-		    {
-		    	
-		    	  if(_connectionManager==null)
-		    	  {
-		    		  _connectionManager= new PoolingHttpClientConnectionManager();
-		        	
-		                if (_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost() !=null )
-		                {
-		                	_connectionManager.setDefaultMaxPerRoute(_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost());
-		                	
-		                
-		                }
-		
-		                if (  _httpClientConfiguration.getConnectionPoolMaxTotalConnection() !=null )
-		                {
-		                	_connectionManager.setMaxTotal(   _httpClientConfiguration.getConnectionPoolMaxTotalConnection()  );
-		                }
-		               
-		    	  }
-		            clientBuilder.setConnectionManager(_connectionManager);
-		            clientBuilder.setConnectionManagerShared(true);   
-		        
-		     }
-
-		    if (  _httpClientConfiguration.getSocketTimeout() != null  ||    _httpClientConfiguration.getConnectionTimeout() != null  )
-		    {
-		    	RequestConfig.Builder requestConfiguilder = RequestConfig.custom();
-		    	 if(  _httpClientConfiguration.getConnectionTimeout()!=null)
-		    	 {
-		    		 requestConfiguilder.setConnectTimeout(Timeout.ofMilliseconds(  _httpClientConfiguration.getConnectionTimeout() ));
-		    		 
-		    	 }
-		    	 
-		    	 if( _httpClientConfiguration.getSocketTimeout() != null )
-		    	 {
-		    		
-		    		 requestConfiguilder.setResponseTimeout(Timeout.ofMilliseconds( _httpClientConfiguration.getSocketTimeout() ));
-		    		
-		    		 
-		    	 }
-		    	 clientBuilder.setDefaultRequestConfig(requestConfiguilder.build());
-		    	 //follow redirect
-		         clientBuilder.setRedirectStrategy(DefaultRedirectStrategy.INSTANCE);
-        }
-
-       
-
-        _httpClient =clientBuilder.build();
-    
+			    // bNoProxy will be true when we would normally be using a proxy but matched on the NoProxyFor list
+			  
+			    if ( StringUtils.isNotBlank( _httpClientConfiguration.getProxyHost() ) )
+			    {
+			    	    boolean bNoProxy = ( StringUtils.isNotBlank( _httpClientConfiguration.getNoProxyFor() ) && matchesList( _httpClientConfiguration.getNoProxyFor().split( SEPARATOR ), strTargetHost) );
+			            if(!bNoProxy && StringUtils.isNotBlank( _httpClientConfiguration.getProxyPort() ) && StringUtils.isNumeric( _httpClientConfiguration.getProxyPort() ))
+			            {
+			            	final HttpHost proxy = new HttpHost("http", _httpClientConfiguration.getProxyHost(),Integer.parseInt( _httpClientConfiguration.getProxyPort()));
+			            	clientBuilder.setProxy(proxy);
+			            }
+			        
+			    }
+			
+			    if ( _httpClientConfiguration.isConnectionPoolEnabled() )
+			    {
+			    	
+			    	  if(_connectionManager==null)
+			    	  {
+			    		  _connectionManager= new PoolingHttpClientConnectionManager();
+			        	
+			                if (_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost() !=null )
+			                {
+			                	_connectionManager.setDefaultMaxPerRoute(_httpClientConfiguration.getConnectionPoolMaxConnectionPerHost());
+			                	
+			                
+			                }
+			
+			                if (  _httpClientConfiguration.getConnectionPoolMaxTotalConnection() !=null )
+			                {
+			                	_connectionManager.setMaxTotal(   _httpClientConfiguration.getConnectionPoolMaxTotalConnection()  );
+			                }
+			               
+			    	  }
+			            clientBuilder.setConnectionManager(_connectionManager);
+			            clientBuilder.setConnectionManagerShared(true);   
+			        
+			     }
+	
+			    if (  _httpClientConfiguration.getSocketTimeout() != null  ||    _httpClientConfiguration.getConnectionTimeout() != null  )
+			    {
+			    	RequestConfig.Builder requestConfiguilder = RequestConfig.custom();
+			    	 if(  _httpClientConfiguration.getConnectionTimeout()!=null)
+			    	 {
+			    		 requestConfiguilder.setConnectTimeout(Timeout.ofMilliseconds(  _httpClientConfiguration.getConnectionTimeout() ));
+			    		 
+			    	 }
+			    	 
+			    	 if( _httpClientConfiguration.getSocketTimeout() != null )
+			    	 {
+			    		
+			    		 requestConfiguilder.setResponseTimeout(Timeout.ofMilliseconds( _httpClientConfiguration.getSocketTimeout() ));
+			    		
+			    		 
+			    	 }
+			    	 clientBuilder.setDefaultRequestConfig(requestConfiguilder.build());
+			    	 //follow redirect
+			         clientBuilder.setRedirectStrategy(DefaultRedirectStrategy.INSTANCE);
+	        }
+	
+	       
+	
+	        _httpClient =clientBuilder.build();
+         }
+	    
     	
         return _httpClient;
     }
