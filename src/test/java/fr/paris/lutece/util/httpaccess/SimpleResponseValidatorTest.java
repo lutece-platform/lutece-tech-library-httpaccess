@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2021, City of Paris
+ * Copyright (c) 2002-2024, City of Paris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,60 +33,27 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-/**
- * SimpleResponseValidator
- */
-public class SimpleResponseValidator implements ResponseStatusValidator
+import org.junit.Test;
+
+public class SimpleResponseValidatorTest
 {
-    /** The Constant SEPARATOR. */
-    private static final String SEPARATOR = ",";
 
-    private final String [ ] _aAuthorizedStatus;
-
-    /**
-     * Constructor
-     * 
-     * @param strList
-     *            The list of authorized status
-     */
-    public SimpleResponseValidator( String strList )
+    @Test
+    public void testSeparateValidCodes( )
     {
-        _aAuthorizedStatus = strList.split( SEPARATOR );
-    }
-
-    /**
-     * Load a Status validator from properties
-     * 
-     * @param strProperty
-     *            The property key
-     * @param strDefault
-     *            The default value
-     * @return A responseValidator initialized with the authorized status list
-     */
-    public static ResponseStatusValidator loadFromProperty( String strProperty, String strDefault )
-    {
-        String strAuthorizedStatusList = AppPropertiesService.getProperty( strProperty, strDefault );
-        return new SimpleResponseValidator( strAuthorizedStatusList );
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public boolean validate( int nStatus )
-    {
-        String strStatus = String.valueOf( nStatus );
-        for ( String strCode : _aAuthorizedStatus )
-        {
-            if ( strStatus.equals( strCode.trim( ) ) )
-            {
-                return true;
-            }
-        }
-
-        return false;
+        SimpleResponseValidator v1 = new SimpleResponseValidator( "200,201" );
+        SimpleResponseValidator v2 = new SimpleResponseValidator( "400,401" );
+        assertTrue( v1.validate( 200 ) );
+        assertTrue( v1.validate( 201 ) );
+        assertFalse( v1.validate( 400 ) );
+        assertFalse( v1.validate( 401 ) );
+        assertTrue( v2.validate( 400 ) );
+        assertTrue( v2.validate( 401 ) );
+        assertFalse( v2.validate( 200 ) );
+        assertFalse( v2.validate( 201 ) );
     }
 
 }
