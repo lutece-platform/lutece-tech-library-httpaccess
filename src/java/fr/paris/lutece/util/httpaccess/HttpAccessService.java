@@ -164,7 +164,16 @@ public class HttpAccessService implements ResponseStatusValidator
     {
     	
     }
-    
+
+    /**
+     * Procure a HttpClientBuilder
+     * 
+     * @return a HttpClientBuilder
+     */
+    protected HttpClientBuilder getHttpClientBuilder( )
+    {
+        return HttpClients.custom( );
+    }
 
     /**
      * get an HTTP client object using current configuration.
@@ -177,7 +186,7 @@ public class HttpAccessService implements ResponseStatusValidator
     {
     	
     	
-			HttpClientBuilder clientBuilder = HttpClients.custom();
+			HttpClientBuilder clientBuilder = getHttpClientBuilder( );
 			
 		
 		    // bNoProxy will be true when we would normally be using a proxy but matched on the NoProxyFor list
