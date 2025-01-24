@@ -131,7 +131,7 @@ public class HttpAccess
     public HttpAccess( )
     {
         _accessService = HttpAccessService.getInstance( );
-        _responseValidator = HttpAccessService.getInstance( );
+        _responseValidator = _accessService;
     }
 
     /**
@@ -1003,7 +1003,7 @@ public class HttpAccess
     	
     	try  {
     		
-    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost());
+    		CloseableHttpClient httpClient = _accessService.getHttpClient( );
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 
 				int nResponse = response.getCode();
@@ -1021,7 +1021,7 @@ public class HttpAccess
 				 
 		        }
     		}
-    		catch (IOException | ParseException | URISyntaxException e) {
+    		catch (IOException | ParseException e) {
 			throwHttpAccessException(strUrl, e);
     		}
 		        finally
@@ -1063,7 +1063,7 @@ public class HttpAccess
     	
     	
     	try  {
-    		CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost());
+    		CloseableHttpClient httpClient = _accessService.getHttpClient( );
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 				
 				int nResponse = response.getCode();
@@ -1092,7 +1092,7 @@ public class HttpAccess
 	       
 		}
     	}
-		catch (IOException | URISyntaxException|ProtocolException  e) {
+		catch (IOException | ProtocolException  e) {
 		throwHttpAccessException(strUrl, e);
 		}
 				
@@ -1120,7 +1120,7 @@ public class HttpAccess
    	
          try {
         	 
-        	 CloseableHttpClient httpClient = _accessService.getHttpClient(httpGet.getUri().getHost());
+        	 CloseableHttpClient httpClient = _accessService.getHttpClient( );
 			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 				
 				int nResponse = response.getCode();
@@ -1191,7 +1191,7 @@ public class HttpAccess
 			}
          }
          
- 		catch (IOException | URISyntaxException|ProtocolException  e) {
+ 		catch (IOException | ProtocolException  e) {
  		throwHttpAccessException(strUrl, e);
  		}
 
@@ -1321,8 +1321,8 @@ public class HttpAccess
     private String getResponseBody( HttpUriRequestBase httpRequest,String strUrl,Map<String,String> mapResponseHeader ) throws HttpAccessException
     {
     	String strResponseBody= StringUtils.EMPTY;
-		try (CloseableHttpClient httpClient = _accessService.getHttpClient(httpRequest.getUri().getHost())){
-		
+		try {
+		    CloseableHttpClient httpClient = _accessService.getHttpClient( );
 			try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
 
 				int nResponse = response.getCode();
@@ -1341,7 +1341,7 @@ public class HttpAccess
 
 		}
 
-		catch (IOException | ParseException | URISyntaxException e) {
+		catch (IOException | ParseException e) {
 			throwHttpAccessException(strUrl, e);
 		}	
     	

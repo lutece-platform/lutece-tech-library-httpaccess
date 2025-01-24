@@ -79,9 +79,6 @@ public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
     /** The Constant PROPERTY_CONNECTION_TIMEOUT. */
     private static final String PROPERTY_CONNECTION_TIMEOUT = "httpAccess.connectionTimeout";
 
-    /** The Constant PROPERTY_CONNECTION_POOL_ENABLED. */
-    private static final String PROPERTY_CONNECTION_POOL_ENABLED = "httpAccess.connectionPoolEnabled";
-
     /** The Constant PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION. */
     private static final String PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION = "httpAccess.connectionPoolMaxTotalConnections";
 
@@ -100,7 +97,6 @@ public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
         this.setNoProxyFor( AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR ) );
         this.setContentCharset( AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET ) );
         this.setElementCharset( AppPropertiesService.getProperty( PROPERTY_ELEMENT_CHARSET ) );
-        this.setConnectionPoolEnabled( AppPropertiesService.getPropertyBoolean( PROPERTY_CONNECTION_POOL_ENABLED, false ) );
 
         try
         {
