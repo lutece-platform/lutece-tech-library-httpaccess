@@ -43,9 +43,6 @@ public class HttpClientConfiguration {
     /** The _str connection timeout. */
     private Integer _nConnectionTimeout;
 
-    /** The _b connection pool enabled. */
-    private boolean _bConnectionPoolEnabled;
-
     /** The _str connection pool max total connection. */
     private Integer _nConnectionPoolMaxTotalConnection;
 
@@ -271,19 +268,21 @@ public class HttpClientConfiguration {
 	/**
 	 * Checks if is connection pool enabled.
 	 *
-	 * @return true, if is connection pool enabled
+	 * @return <code>true</code>
+	 * @deprecated pooling is always enabled
 	 */
 	public boolean isConnectionPoolEnabled() {
-		return _bConnectionPoolEnabled;
+		return true;
 	}
 
 	/**
 	 * Sets the connection pool enabled.
 	 *
 	 * @param _bConnectionPoolEnabled the new connection pool enabled
+	 * @deprecated pooling is always enabled
 	 */
 	public void setConnectionPoolEnabled(boolean _bConnectionPoolEnabled) {
-		this._bConnectionPoolEnabled = _bConnectionPoolEnabled;
+		// always enabled
 	}
 
 	/**

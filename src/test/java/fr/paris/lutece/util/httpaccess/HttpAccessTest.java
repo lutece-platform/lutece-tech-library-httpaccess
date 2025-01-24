@@ -35,9 +35,11 @@ package fr.paris.lutece.util.httpaccess;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,12 +50,15 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import fr.paris.lutece.portal.service.util.AppPathService;
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -67,6 +72,52 @@ public class HttpAccessTest {
 	private MockWebServer mockWebServer;
 	private ObjectMapper _objectMapper = new ObjectMapper();
 	private Logger _logger = Logger.getLogger(this.getClass());
+	
+	@BeforeClass
+	public static void initLutece( )
+	{
+	    // fake initialization
+	    AppPathService.init( "" );
+        AppPropertiesService.init( "" );
+	}
+
+    @Test
+    public void testDoGetProxy( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
+    {
+        String strUrlTestHttp = mockWebServer.url( "/test?param1=1&parma2=2" ).toString( );
+        HttpClientConfiguration configuration = new HttpClientConfiguration( );
+        configuration.setProxyHost( "localhost_butdoesnot.exists" );
+        configuration.setProxyPort( "3128" );
+        HttpAccessService httpAccessService = new HttpAccessService( configuration );
+        HttpAccess httpAccess = new HttpAccess( httpAccessService, new MockResponseStatusValidator( ) );
+        try
+        {
+            httpAccess.doGet( strUrlTestHttp, null, null, null, null );
+            fail( "Should have failed to connect to proxy" );
+        }
+        catch( HttpAccessException e )
+        {
+            assertEquals( e.getCause( ).getClass( ), UnknownHostException.class );
+        }
+    }
+
+    @Test
+    public void testDoGetProxyNoProxy( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
+    {
+        String strUrlTestHttp = mockWebServer.url( "/test?param1=1&parma2=2" ).toString( );
+        HttpClientConfiguration configuration = new HttpClientConfiguration( );
+        configuration.setProxyHost( "localhost_butdoesnot.exists" );
+        configuration.setProxyPort( "3128" );
+        configuration.setNoProxyFor( mockWebServer.getHostName( ) );
+        HttpAccessService httpAccessService = new HttpAccessService( configuration );
+        HttpAccess httpAccess = new HttpAccess( httpAccessService, new MockResponseStatusValidator( ) );
+        httpAccess.doGet( strUrlTestHttp, null, null, null, null );
+        String strTest = httpAccess.doGet( strUrlTestHttp, null, null, null, null );
+
+        HttpRequestResult jsonRespone = _objectMapper.readValue( strTest, HttpRequestResult.class );
+        assertEquals( "GET", jsonRespone.getMethodName( ) );
+        _logger.debug( strTest );
+    }
 
 	@Test
 	public void testDoGet() throws IOException, HttpAccessException {
@@ -484,6 +535,8 @@ public class HttpAccessTest {
 
 		this.mockWebServer.start(18080);
 
+		AppPathService.init( "./" );
+		AppPropertiesService.init( "./" );
 	}
 
 	@After

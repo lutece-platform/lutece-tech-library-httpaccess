@@ -38,7 +38,11 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import fr.paris.lutece.portal.service.util.AppPathService;
+import fr.paris.lutece.portal.service.util.AppPropertiesService;
 
 public class CustomHttpAccessServiceTest
 {
@@ -60,11 +64,20 @@ public class CustomHttpAccessServiceTest
         }
         
     }
+    
+    @BeforeClass
+    public static void initLutece( )
+    {
+        // fake initialization
+        AppPathService.init( "" );
+        AppPropertiesService.init( "" );
+    }
+
     @Test
     public void testCustomHttpClientBuilder( ) throws IOException
     {
         CustomHttpAccessService service = new CustomHttpAccessService( new HttpClientConfiguration( ) );
-        service.getHttpClient( "localhost" ).close( );
+        service.getHttpClient( ).close( );
         assertTrue( service._getHttpClientBuilderCalled );
     }
 
