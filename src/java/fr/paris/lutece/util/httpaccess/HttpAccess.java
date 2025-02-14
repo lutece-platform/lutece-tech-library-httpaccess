@@ -76,7 +76,6 @@ import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.util.signrequest.AuthenticateRequestInformations;
 import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
-
 /**
  * Http net Object Accessor.
  */
@@ -105,23 +104,21 @@ public class HttpAccess
     /** The Constant PROPERTY_HEADER_CONTENT_TYPE. */
     private static final String PROPERTY_HEADER_CONTENT_TYPE = "Content-Type";
 
-  
     /** The Constant PROPERTY_HTTP_REQUEST_POST. */
     private static final String PROPERTY_HTTP_REQUEST_POST = "POST";
 
     /** The Constant PROPERTY_HTTP_REQUEST_PUT. */
     private static final String PROPERTY_HTTP_REQUEST_PUT = "PUT";
-    
+
     /** The Constant PROPERTY_HTTP_REQUEST_DELETE. */
     private static final String PROPERTY_HTTP_REQUEST_DELETE = "DELETE";
-
 
     /** The Constant DEFAULT_CHARSET. */
     private static final String DEFAULT_CHARSET = "UTF-8";
 
     /** The response validator. */
     private ResponseStatusValidator _responseValidator;
-    
+
     /** The access service. */
     private HttpAccessService _accessService;
 
@@ -137,40 +134,40 @@ public class HttpAccess
     /**
      * Instantiates a new http access.
      *
-     * @param validator the validator
+     * @param validator
+     *            the validator
      */
     public HttpAccess( ResponseStatusValidator validator )
     {
         _accessService = HttpAccessService.getInstance( );
         _responseValidator = validator;
     }
-    
-    
-    /**
-     * Instantiates a new http access.
-     *
-     * @param accessService the access service
-     * @param validator the validator
-     */
-    public HttpAccess(  HttpAccessService accessService,ResponseStatusValidator validator)
-    {
-        _accessService = accessService;
-        _responseValidator =validator;
-    }
-    
-    /**
-     * Instantiates a new http access.
-     *
-     * @param accessService the access service
-     */
-    public HttpAccess(  HttpAccessService accessService)
-    {
-        _accessService = accessService;
-        _responseValidator =HttpAccessService.getInstance( );
-    }
-    
-    
 
+    /**
+     * Instantiates a new http access.
+     *
+     * @param accessService
+     *            the access service
+     * @param validator
+     *            the validator
+     */
+    public HttpAccess( HttpAccessService accessService, ResponseStatusValidator validator )
+    {
+        _accessService = accessService;
+        _responseValidator = validator;
+    }
+
+    /**
+     * Instantiates a new http access.
+     *
+     * @param accessService
+     *            the access service
+     */
+    public HttpAccess( HttpAccessService accessService )
+    {
+        _accessService = accessService;
+        _responseValidator = HttpAccessService.getInstance( );
+    }
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -244,21 +241,19 @@ public class HttpAccess
     public String doGet( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-		String strResponseBody = StringUtils.EMPTY;
-		
-		 HttpUriRequestBase httpGet = new HttpGet(strUrl);
-		 addSecurityInformations(httpGet, strUrl, authenticator, listElements);
+        String strResponseBody = StringUtils.EMPTY;
 
-		 
-		if (headersRequest != null) {
-			headersRequest.forEach((k, v) -> httpGet.addHeader(k, v));
-		}
-		
-		
-		strResponseBody=getResponseBody(httpGet, strUrl, headersResponse);
-		
+        HttpUriRequestBase httpGet = new HttpGet( strUrl );
+        addSecurityInformations( httpGet, strUrl, authenticator, listElements );
 
-		return strResponseBody;
+        if ( headersRequest != null )
+        {
+            headersRequest.forEach( ( k, v ) -> httpGet.addHeader( k, v ) );
+        }
+
+        strResponseBody = getResponseBody( httpGet, strUrl, headersResponse );
+
+        return strResponseBody;
     }
 
     /**
@@ -342,12 +337,11 @@ public class HttpAccess
     public String doPost( String strUrl, Map<String, String> params, RequestAuthenticator authenticator, List<String> listElements,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-          
-        HttpUriRequestBase httpPost = new HttpPost(strUrl);
-     
-        return doSendFormEntity(httpPost, strUrl, params, authenticator, listElements, headersRequest, headersResponse);
-        
-        
+
+        HttpUriRequestBase httpPost = new HttpPost( strUrl );
+
+        return doSendFormEntity( httpPost, strUrl, params, authenticator, listElements, headersRequest, headersResponse );
+
     }
 
     /**
@@ -385,32 +379,30 @@ public class HttpAccess
         switch( strMethod )
         {
             case PROPERTY_HTTP_REQUEST_PUT:
-            
-            	httpRequest=new HttpPut(strUrl);
+
+                httpRequest = new HttpPut( strUrl );
                 break;
 
             case PROPERTY_HTTP_REQUEST_POST:
-            	httpRequest = new HttpPost(strUrl);
+                httpRequest = new HttpPost( strUrl );
                 break;
 
             case PROPERTY_HTTP_REQUEST_DELETE:
-            	httpRequest = new HttpDelete(strUrl);
-            	break;
+                httpRequest = new HttpDelete( strUrl );
+                break;
             default:
-            	httpRequest =  new HttpPost(strUrl);
+                httpRequest = new HttpPost( strUrl );
                 break;
         }
-       
 
-        
-        if (headersRequest != null) {
-			headersRequest.forEach((k, v) -> httpRequest.addHeader(k, v));
-		}
-        addSecurityInformations(httpRequest, strUrl, authenticator, listElements);
-        httpRequest.setEntity(new StringEntity(strContent, ContentType.APPLICATION_JSON, charset, false));
-        
-		   strResponseBody=getResponseBody(httpRequest, strUrl, headersResponse);
-			
+        if ( headersRequest != null )
+        {
+            headersRequest.forEach( ( k, v ) -> httpRequest.addHeader( k, v ) );
+        }
+        addSecurityInformations( httpRequest, strUrl, authenticator, listElements );
+        httpRequest.setEntity( new StringEntity( strContent, ContentType.APPLICATION_JSON, charset, false ) );
+
+        strResponseBody = getResponseBody( httpRequest, strUrl, headersResponse );
 
         return strResponseBody;
     }
@@ -437,8 +429,11 @@ public class HttpAccess
     public String doPostJSON( String strUrl, String strJSON, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, authenticator, listElements,
-                headersRequest, headersResponse );
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE,
+                !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        ? _accessService.getHttpClientConfiguration( ).getContentCharset( )
+                        : DEFAULT_CHARSET,
+                authenticator, listElements, headersRequest, headersResponse );
     }
 
     /**
@@ -459,8 +454,11 @@ public class HttpAccess
     public String doPostJSON( String strUrl, String strJSON, Map<String, String> headersRequest, Map<String, String> headersResponse )
             throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, null, null, headersRequest,
-                headersResponse );
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_POST, strJSON, DEFAULT_JSON_MIME_TYPE,
+                !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        ? _accessService.getHttpClientConfiguration( ).getContentCharset( )
+                        : DEFAULT_CHARSET,
+                null, null, headersRequest, headersResponse );
     }
 
     /**
@@ -485,8 +483,11 @@ public class HttpAccess
     public String doPutJSON( String strUrl, String strJSON, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, authenticator, listElements,
-                headersRequest, headersResponse );
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE,
+                !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        ? _accessService.getHttpClientConfiguration( ).getContentCharset( )
+                        : DEFAULT_CHARSET,
+                authenticator, listElements, headersRequest, headersResponse );
     }
 
     /**
@@ -506,8 +507,11 @@ public class HttpAccess
      */
     public String doPutJSON( String strUrl, String strJSON, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, null, null, headersRequest,
-                headersResponse );
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_PUT, strJSON, DEFAULT_JSON_MIME_TYPE,
+                !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        ? _accessService.getHttpClientConfiguration( ).getContentCharset( )
+                        : DEFAULT_CHARSET,
+                null, null, headersRequest, headersResponse );
     }
 
     /**
@@ -566,9 +570,9 @@ public class HttpAccess
      */
     public String doPostMultiValues( String strUrl, Map<String, List<String>> params, RequestAuthenticator authenticator, List<String> listElements,
             Map<String, String> headersRequest ) throws HttpAccessException
-    {  
-   
-    	return doPostMultiValues(strUrl, params, authenticator, listElements, headersRequest, null);
+    {
+
+        return doPostMultiValues( strUrl, params, authenticator, listElements, headersRequest, null );
     }
 
     /**
@@ -593,30 +597,30 @@ public class HttpAccess
     public String doPostMultiValues( String strUrl, Map<String, List<String>> params, RequestAuthenticator authenticator, List<String> listElements,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-    	
-    	
-    	String strResponseBody = StringUtils.EMPTY;
-    	HttpUriRequestBase httpPost = new HttpPost(strUrl);
-        
-        
-    	List<NameValuePair> nvps = new ArrayList<>();
-        
 
-    	if (headersRequest != null) {
-    		headersRequest.forEach((k, v) -> httpPost.addHeader(k, v));
-    	}
+        String strResponseBody = StringUtils.EMPTY;
+        HttpUriRequestBase httpPost = new HttpPost( strUrl );
 
-    	
-    	 if ( params != null ){
-    		 	params.forEach((k, v) -> v.stream().forEach(y-> nvps.add(new BasicNameValuePair(k, y))));
-          }
+        List<NameValuePair> nvps = new ArrayList<>( );
 
-    	
-    	addSecurityInformations(httpPost, strUrl, authenticator, listElements);
-    	httpPost.setEntity(new UrlEncodedFormEntity(nvps, !StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET)));
+        if ( headersRequest != null )
+        {
+            headersRequest.forEach( ( k, v ) -> httpPost.addHeader( k, v ) );
+        }
 
-		strResponseBody=getResponseBody(httpPost, strUrl, headersResponse);
-		
+        if ( params != null )
+        {
+            params.forEach( ( k, v ) -> v.stream( ).forEach( y -> nvps.add( new BasicNameValuePair( k, y ) ) ) );
+        }
+
+        addSecurityInformations( httpPost, strUrl, authenticator, listElements );
+        httpPost.setEntity( new UrlEncodedFormEntity( nvps,
+                !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        ? Charset.forName( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        : Charset.forName( DEFAULT_CHARSET ) ) );
+
+        strResponseBody = getResponseBody( httpPost, strUrl, headersResponse );
+
         return strResponseBody;
     }
 
@@ -711,103 +715,111 @@ public class HttpAccess
             List<String> listElements, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
         String strResponseBody = StringUtils.EMPTY;
-        HttpUriRequestBase httpPost = new HttpPost(strUrl);
+        HttpUriRequestBase httpPost = new HttpPost( strUrl );
 
-        if (headersRequest != null) {
-			headersRequest.forEach((k, v) -> httpPost.addHeader(k, v));
-		}
+        if ( headersRequest != null )
+        {
+            headersRequest.forEach( ( k, v ) -> httpPost.addHeader( k, v ) );
+        }
 
         ArrayList<File> listFiles = new ArrayList<File>( );
-        
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
-       
-            if ( ( fileItems != null ) && !fileItems.isEmpty( ) )
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create( );
+
+        if ( ( fileItems != null ) && !fileItems.isEmpty( ) )
+        {
+            // Store the Files
+            for ( Entry<String, FileItem> paramFileItem : fileItems.entrySet( ) )
             {
-                // Store the Files
-                for ( Entry<String, FileItem> paramFileItem : fileItems.entrySet( ) )
+                FileItem fileItem = paramFileItem.getValue( );
+
+                if ( fileItem != null )
                 {
-                    FileItem fileItem = paramFileItem.getValue( );
-
-                    if ( fileItem != null )
+                    try
                     {
-                        try
+                        String strContentType = null;
+                        String strCharset = null;
+                        if ( StringUtils.isNotBlank( fileItem.getContentType( ) ) )
                         {
-                            String strContentType = null;
-                            String strCharset = null;
-                            if ( StringUtils.isNotBlank( fileItem.getContentType( ) ) )
+                            String [ ] splitContentType = StringUtils.split( fileItem.getContentType( ), SEPARATOR_CONTENT_TYPE );
+                            if ( splitContentType.length > 0 && StringUtils.isNotBlank( splitContentType [0] ) )
                             {
-                                String [ ] splitContentType = StringUtils.split( fileItem.getContentType( ), SEPARATOR_CONTENT_TYPE );
-                                if ( splitContentType.length > 0 && StringUtils.isNotBlank( splitContentType [0] ) )
-                                {
-                                    strContentType = splitContentType [0];
-                                }
-                                if ( splitContentType.length > 1 && StringUtils.isNotBlank( splitContentType [1] ) &&   splitContentType [1] .toUpperCase().contains("CHARSET") )
-                                {
-                                	
-                                	String [ ] splitCharset =splitContentType [1].split("=");
-                                	if(splitCharset.length>1)
-                                	{
-                                		strCharset = splitCharset [1];
-                                	}
-                                    
-           
-                                    
-                                }
+                                strContentType = splitContentType [0];
                             }
+                            if ( splitContentType.length > 1 && StringUtils.isNotBlank( splitContentType [1] )
+                                    && splitContentType [1].toUpperCase( ).contains( "CHARSET" ) )
+                            {
 
-                            if ( fileItem.isInMemory( ) )
-                            {
-                     
-                               ContentType contentType= !StringUtils.isEmpty(strContentType)?ContentType.create(strContentType,!StringUtils.isEmpty(strCharset)?Charset.forName(strCharset):Charset.forName(DEFAULT_CHARSET)):ContentType.DEFAULT_BINARY;
-                                 
-                            	builder.addBinaryBody(paramFileItem.getKey( ), fileItem.get( ),contentType,fileItem.getName());
-                            	
-                            	
-                            }
-                            else
-                            {
-                                File file = File.createTempFile( "httpaccess-multipart-", null );
-                                // Store files for deletion after the request completed
-                                listFiles.add( file );
-                                fileItem.write( file );
-                                ContentType contentType= !StringUtils.isEmpty(strContentType)?ContentType.create(strContentType,!StringUtils.isEmpty(strCharset)?Charset.forName(strCharset):Charset.forName(DEFAULT_CHARSET)):ContentType.DEFAULT_BINARY;
-                                
-                                builder.addBinaryBody(paramFileItem.getKey( ), file,contentType ,fileItem.getName());
-                         
-                             
-                            }
-                           
+                                String [ ] splitCharset = splitContentType [1].split( "=" );
+                                if ( splitCharset.length > 1 )
+                                {
+                                    strCharset = splitCharset [1];
+                                }
 
-                          
+                            }
                         }
-                        catch( Exception e )
+
+                        if ( fileItem.isInMemory( ) )
                         {
-                            String strError = "HttpAccess - Error writing file '" + fileItem.getName( ) + "' : ";
-                            AppLogService.error( strError + e.getMessage( ), e );
-                            throw new HttpAccessException( strError + e.getMessage( ), e );
+
+                            ContentType contentType = !StringUtils.isEmpty( strContentType )
+                                    ? ContentType.create( strContentType,
+                                            !StringUtils.isEmpty( strCharset ) ? Charset.forName( strCharset ) : Charset.forName( DEFAULT_CHARSET ) )
+                                    : ContentType.DEFAULT_BINARY;
+
+                            builder.addBinaryBody( paramFileItem.getKey( ), fileItem.get( ), contentType, fileItem.getName( ) );
+
                         }
+                        else
+                        {
+                            File file = File.createTempFile( "httpaccess-multipart-", null );
+                            // Store files for deletion after the request completed
+                            listFiles.add( file );
+                            fileItem.write( file );
+                            ContentType contentType = !StringUtils.isEmpty( strContentType )
+                                    ? ContentType.create( strContentType,
+                                            !StringUtils.isEmpty( strCharset ) ? Charset.forName( strCharset ) : Charset.forName( DEFAULT_CHARSET ) )
+                                    : ContentType.DEFAULT_BINARY;
+
+                            builder.addBinaryBody( paramFileItem.getKey( ), file, contentType, fileItem.getName( ) );
+
+                        }
+
+                    }
+                    catch( Exception e )
+                    {
+                        String strError = "HttpAccess - Error writing file '" + fileItem.getName( ) + "' : ";
+                        AppLogService.error( strError + e.getMessage( ), e );
+                        throw new HttpAccessException( strError + e.getMessage( ), e );
                     }
                 }
             }
-            if ( ( params != null ) && !params.isEmpty( ) )
-            {
-            	
-            	 ContentType contentType= ContentType.create("text/plain",!StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET));
-                // Additionnal parameters
-                params.forEach((k, v) -> { v.stream().forEach(  y -> { builder.addTextBody(k,y,contentType);});});
-               
-            }
-            
-            addSecurityInformations(httpPost, strUrl, authenticator, listElements);
-            builder.setCharset(  !StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET));
-        	HttpEntity entityForm = builder.build();
-        	httpPost.setEntity(entityForm);
-        	
-        	strResponseBody=getResponseBody(httpPost, strUrl, headersResponse);
+        }
+        if ( ( params != null ) && !params.isEmpty( ) )
+        {
 
-       
-        
+            ContentType contentType = ContentType.create( "text/plain",
+                    !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                            ? Charset.forName( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                            : Charset.forName( DEFAULT_CHARSET ) );
+            // Additionnal parameters
+            params.forEach( ( k, v ) -> {
+                v.stream( ).forEach( y -> {
+                    builder.addTextBody( k, y, contentType );
+                } );
+            } );
+
+        }
+
+        addSecurityInformations( httpPost, strUrl, authenticator, listElements );
+        builder.setCharset( !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                ? Charset.forName( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                : Charset.forName( DEFAULT_CHARSET ) );
+        HttpEntity entityForm = builder.build( );
+        httpPost.setEntity( entityForm );
+
+        strResponseBody = getResponseBody( httpPost, strUrl, headersResponse );
+
         return strResponseBody;
     }
 
@@ -833,53 +845,58 @@ public class HttpAccess
     public String doPut( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> params,
             Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-       
-        HttpPut httpPut = new HttpPut(strUrl);
-        return doSendFormEntity(httpPut, strUrl, params, authenticator, listElements, headersRequest, headersResponse);
+
+        HttpPut httpPut = new HttpPut( strUrl );
+        return doSendFormEntity( httpPut, strUrl, params, authenticator, listElements, headersRequest, headersResponse );
     }
-    
-    
-    
-    
+
     /**
      * Send a POST or PUT HTTP request to an url and return the response content.
      *
-     * @param httprequestBase the httprequest base
-     * @param strUrl            the url to access
-     * @param params            the list of parameters to post
-     * @param authenticator            The {@link RequestAuthenticator}
-     * @param listElements            to include in the signature
-     * @param headersRequest            Map of headers request parameters
-     * @param headersResponse            Map to contain response headers
+     * @param httprequestBase
+     *            the httprequest base
+     * @param strUrl
+     *            the url to access
+     * @param params
+     *            the list of parameters to post
+     * @param authenticator
+     *            The {@link RequestAuthenticator}
+     * @param listElements
+     *            to include in the signature
+     * @param headersRequest
+     *            Map of headers request parameters
+     * @param headersResponse
+     *            Map to contain response headers
      * @return The response content of the Post request to the given Url
-     * @throws HttpAccessException             if there is a problem to access to the given Url
+     * @throws HttpAccessException
+     *             if there is a problem to access to the given Url
      */
-    private String doSendFormEntity( HttpUriRequestBase httprequestBase,String strUrl, Map<String, String> params, RequestAuthenticator authenticator, List<String> listElements,
-            Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
+    private String doSendFormEntity( HttpUriRequestBase httprequestBase, String strUrl, Map<String, String> params, RequestAuthenticator authenticator,
+            List<String> listElements, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
         String strResponseBody = StringUtils.EMPTY;
-        
-    	List<NameValuePair> nvps = new ArrayList<>();
 
-		if (headersRequest != null) {
-			headersRequest.forEach((k, v) -> httprequestBase.addHeader(k, v));
-		}
-		if (params != null) {
-			params.forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-		}
-		
-		addSecurityInformations(httprequestBase, strUrl, authenticator, listElements);
-		httprequestBase.setEntity(new UrlEncodedFormEntity(nvps, !StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET)));
+        List<NameValuePair> nvps = new ArrayList<>( );
 
-		strResponseBody=getResponseBody(httprequestBase, strUrl, headersResponse);
-		
+        if ( headersRequest != null )
+        {
+            headersRequest.forEach( ( k, v ) -> httprequestBase.addHeader( k, v ) );
+        }
+        if ( params != null )
+        {
+            params.forEach( ( k, v ) -> nvps.add( new BasicNameValuePair( k, v ) ) );
+        }
+
+        addSecurityInformations( httprequestBase, strUrl, authenticator, listElements );
+        httprequestBase.setEntity( new UrlEncodedFormEntity( nvps,
+                !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        ? Charset.forName( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        : Charset.forName( DEFAULT_CHARSET ) ) );
+
+        strResponseBody = getResponseBody( httprequestBase, strUrl, headersResponse );
 
         return strResponseBody;
     }
-
-    
-    
-    
 
     /**
      * Send a DELETE HTTP request to an url and return the response content.
@@ -901,21 +918,19 @@ public class HttpAccess
     public String doDelete( String strUrl, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
             Map<String, String> headersResponse ) throws HttpAccessException
     {
-    	String strResponseBody = StringUtils.EMPTY;
-		
-		 HttpUriRequestBase httpDelete = new HttpDelete(strUrl);
-		 addSecurityInformations(httpDelete, strUrl, authenticator, listElements);
+        String strResponseBody = StringUtils.EMPTY;
 
-		 
-		if (headersRequest != null) {
-			headersRequest.forEach((k, v) -> httpDelete.addHeader(k, v));
-		}
-		
-		
-		strResponseBody=getResponseBody(httpDelete, strUrl, headersResponse);
-		
+        HttpUriRequestBase httpDelete = new HttpDelete( strUrl );
+        addSecurityInformations( httpDelete, strUrl, authenticator, listElements );
 
-		return strResponseBody;
+        if ( headersRequest != null )
+        {
+            headersRequest.forEach( ( k, v ) -> httpDelete.addHeader( k, v ) );
+        }
+
+        strResponseBody = getResponseBody( httpDelete, strUrl, headersResponse );
+
+        return strResponseBody;
     }
 
     /**
@@ -937,13 +952,16 @@ public class HttpAccess
      * @throws HttpAccessException
      *             if there is a problem to access to the given Url
      */
-    public String doDeleteJSON( String strUrl, String strJSON, RequestAuthenticator authenticator, List<String> listElements, Map<String, String> headersRequest,
-            Map<String, String> headersResponse ) throws HttpAccessException
+    public String doDeleteJSON( String strUrl, String strJSON, RequestAuthenticator authenticator, List<String> listElements,
+            Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
-    	return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_DELETE, strJSON, DEFAULT_JSON_MIME_TYPE, !StringUtils.isEmpty( _accessService.getHttpClientConfiguration().getContentCharset())? _accessService.getHttpClientConfiguration().getContentCharset():DEFAULT_CHARSET, authenticator, listElements,
-                headersRequest, headersResponse );
+        return doRequestEnclosingMethod( strUrl, PROPERTY_HTTP_REQUEST_DELETE, strJSON, DEFAULT_JSON_MIME_TYPE,
+                !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                        ? _accessService.getHttpClientConfiguration( ).getContentCharset( )
+                        : DEFAULT_CHARSET,
+                authenticator, listElements, headersRequest, headersResponse );
     }
-    
+
     /**
      * Send a GET HTTP request to an Url and return the response content.
      * 
@@ -999,52 +1017,51 @@ public class HttpAccess
      */
     public void downloadFile( String strUrl, OutputStream outputStream ) throws HttpAccessException
     {
-    	HttpGet httpGet = new HttpGet(strUrl);
-    	
-    	try  {
-    		
-    		CloseableHttpClient httpClient = _accessService.getHttpClient( );
-			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+        HttpGet httpGet = new HttpGet( strUrl );
 
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
-				
-				HttpEntity entity = response.getEntity();
-				
-				
-				if(entity!=null)
-				{
-					entity.writeTo(outputStream);				   
-			         	
-				}
-				
-				 
-		        }
-    		}
-    		catch (IOException | ParseException e) {
-			throwHttpAccessException(strUrl, e);
-    		}
-		        finally
-		        {
-		            try
-		            {
-		                if ( outputStream != null )
-		                {
-		                	outputStream.close( );
-		                }
+        try
+        {
 
-		            }
-		            catch( IOException e )
-		            {
-		                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
-		                throw new HttpAccessException( e.getMessage( ), e );
-		            }
+            CloseableHttpClient httpClient = _accessService.getHttpClient( );
+            try ( CloseableHttpResponse response = httpClient.execute( httpGet ) )
+            {
 
-		          
-		        }
-				
-			
-			}
+                int nResponse = response.getCode( );
+                validateResponseStatus( nResponse, httpGet.getMethod( ), response, strUrl );
+
+                HttpEntity entity = response.getEntity( );
+
+                if ( entity != null )
+                {
+                    entity.writeTo( outputStream );
+
+                }
+
+            }
+        }
+        catch( IOException | ParseException e )
+        {
+            throwHttpAccessException( strUrl, e );
+        }
+        finally
+        {
+            try
+            {
+                if ( outputStream != null )
+                {
+                    outputStream.close( );
+                }
+
+            }
+            catch( IOException e )
+            {
+                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
+                throw new HttpAccessException( e.getMessage( ), e );
+            }
+
+        }
+
+    }
 
     /**
      * Send a GET HTTP request to an Url and return the response content.
@@ -1057,51 +1074,46 @@ public class HttpAccess
      */
     public String getFileName( String strUrl ) throws HttpAccessException
     {
-          String strFileName = null;
-        
-          HttpGet httpGet = new HttpGet(strUrl);
-    	
-    	
-    	try  {
-    		CloseableHttpClient httpClient = _accessService.getHttpClient( );
-			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-				
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
-				
-				
-				Header  headerContentDisposition= response.getHeader(PROPERTY_HEADER_CONTENT_DISPOSITION);
-				  if ( headerContentDisposition != null )
-		            {
-		                String headerValue = headerContentDisposition.getValue( );
-		                Pattern p = Pattern.compile( PATTERN_FILENAME );
-		                Matcher matcher = p.matcher( headerValue );
+        String strFileName = null;
 
-		                if ( matcher.matches( ) )
-		                {
-		                    strFileName = matcher.group( 1 );
-		                }
-		            }
-		            else
-		            {
-		                String [ ] tab = strUrl.split( "/" );
-		                strFileName = tab [tab.length - 1];
-		            }
-				
-				 
-	       
-		}
-    	}
-		catch (IOException | ProtocolException  e) {
-		throwHttpAccessException(strUrl, e);
-		}
-				
-			
-        
-    	return strFileName;
-        
-        
-      
+        HttpGet httpGet = new HttpGet( strUrl );
+
+        try
+        {
+            CloseableHttpClient httpClient = _accessService.getHttpClient( );
+            try ( CloseableHttpResponse response = httpClient.execute( httpGet ) )
+            {
+
+                int nResponse = response.getCode( );
+                validateResponseStatus( nResponse, httpGet.getMethod( ), response, strUrl );
+
+                Header headerContentDisposition = response.getHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
+                if ( headerContentDisposition != null )
+                {
+                    String headerValue = headerContentDisposition.getValue( );
+                    Pattern p = Pattern.compile( PATTERN_FILENAME );
+                    Matcher matcher = p.matcher( headerValue );
+
+                    if ( matcher.matches( ) )
+                    {
+                        strFileName = matcher.group( 1 );
+                    }
+                }
+                else
+                {
+                    String [ ] tab = strUrl.split( "/" );
+                    strFileName = tab [tab.length - 1];
+                }
+
+            }
+        }
+        catch( IOException | ProtocolException e )
+        {
+            throwHttpAccessException( strUrl, e );
+        }
+
+        return strFileName;
+
     }
 
     /**
@@ -1115,85 +1127,84 @@ public class HttpAccess
      */
     public FileItem downloadFile( String strUrl ) throws HttpAccessException
     {
-    	 MemoryFileItem fileItem = null;
-         HttpGet httpGet = new HttpGet(strUrl);
-   	
-         try {
-        	 
-        	 CloseableHttpClient httpClient = _accessService.getHttpClient( );
-			try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-				
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpGet.getMethod(), response, strUrl);
-            // Get the file name
-            String strFileName = StringUtils.EMPTY;
-           
-            Header  headerContentDisposition= response.getHeader(PROPERTY_HEADER_CONTENT_DISPOSITION);
-			  if ( headerContentDisposition != null )
-	            {
-	                String headerValue = headerContentDisposition.getValue( );
-	                Pattern p = Pattern.compile( PATTERN_FILENAME );
-	                Matcher matcher = p.matcher( headerValue );
+        MemoryFileItem fileItem = null;
+        HttpGet httpGet = new HttpGet( strUrl );
 
-	                if ( matcher.matches( ) )
-	                {
-	                    strFileName = matcher.group( 1 );
-	                }
-	            }
-	            else
-	            {
-	                String [ ] tab = strUrl.split( "/" );
-	                strFileName = tab [tab.length - 1];
-	            }
-			  
-			  
-            // Get the file size
-            long lSize = 0;
-            Header  headerContentLength= response.getHeader(PROPERTY_HEADER_CONTENT_LENGTH);
-            if ( headerContentLength != null )
+        try
+        {
+
+            CloseableHttpClient httpClient = _accessService.getHttpClient( );
+            try ( CloseableHttpResponse response = httpClient.execute( httpGet ) )
             {
-                lSize = Long.parseLong( headerContentLength.getValue());
-            }
 
-            // Get the content type of the file
-            String strContentType = StringUtils.EMPTY;
+                int nResponse = response.getCode( );
+                validateResponseStatus( nResponse, httpGet.getMethod( ), response, strUrl );
+                // Get the file name
+                String strFileName = StringUtils.EMPTY;
 
-            Header headerContentType = response.getHeader( PROPERTY_HEADER_CONTENT_TYPE );
-
-            if ( headerContentType != null )
-            {
-                strContentType = headerContentType.getValue( );
-
-                if ( StringUtils.isNotBlank( strContentType ) )
+                Header headerContentDisposition = response.getHeader( PROPERTY_HEADER_CONTENT_DISPOSITION );
+                if ( headerContentDisposition != null )
                 {
-                    int nIndexOfSeparator = strContentType.indexOf( SEPARATOR_CONTENT_TYPE );
-                    strContentType = strContentType.substring( 0, nIndexOfSeparator );
+                    String headerValue = headerContentDisposition.getValue( );
+                    Pattern p = Pattern.compile( PATTERN_FILENAME );
+                    Matcher matcher = p.matcher( headerValue );
+
+                    if ( matcher.matches( ) )
+                    {
+                        strFileName = matcher.group( 1 );
+                    }
                 }
-            }
+                else
+                {
+                    String [ ] tab = strUrl.split( "/" );
+                    strFileName = tab [tab.length - 1];
+                }
 
-            if ( StringUtils.isBlank( strContentType ) )
-            {
-                strContentType = DEFAULT_MIME_TYPE;
-            }
-            
-            
-            HttpEntity entity = response.getEntity();
-			
-			
-			if(entity!=null)
-			{
-				ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
-				entity.writeTo(outputStream);				   
-			    fileItem = new MemoryFileItem(outputStream.toByteArray(), strFileName, lSize, strContentType );   	
-			}
+                // Get the file size
+                long lSize = 0;
+                Header headerContentLength = response.getHeader( PROPERTY_HEADER_CONTENT_LENGTH );
+                if ( headerContentLength != null )
+                {
+                    lSize = Long.parseLong( headerContentLength.getValue( ) );
+                }
 
-			
-			}
-         }
-         
- 		catch (IOException | ProtocolException  e) {
- 		throwHttpAccessException(strUrl, e);
- 		}
+                // Get the content type of the file
+                String strContentType = StringUtils.EMPTY;
+
+                Header headerContentType = response.getHeader( PROPERTY_HEADER_CONTENT_TYPE );
+
+                if ( headerContentType != null )
+                {
+                    strContentType = headerContentType.getValue( );
+
+                    if ( StringUtils.isNotBlank( strContentType ) )
+                    {
+                        int nIndexOfSeparator = strContentType.indexOf( SEPARATOR_CONTENT_TYPE );
+                        strContentType = strContentType.substring( 0, nIndexOfSeparator );
+                    }
+                }
+
+                if ( StringUtils.isBlank( strContentType ) )
+                {
+                    strContentType = DEFAULT_MIME_TYPE;
+                }
+
+                HttpEntity entity = response.getEntity( );
+
+                if ( entity != null )
+                {
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+                    entity.writeTo( outputStream );
+                    fileItem = new MemoryFileItem( outputStream.toByteArray( ), strFileName, lSize, strContentType );
+                }
+
+            }
+        }
+
+        catch( IOException | ProtocolException e )
+        {
+            throwHttpAccessException( strUrl, e );
+        }
 
         return fileItem;
     }
@@ -1201,26 +1212,34 @@ public class HttpAccess
     /**
      * Validate an HTTP response status code.
      *
-     * @param nResponseStatus            The response status
-     * @param strMethodName the str method name
-     * @param response the response
-     * @param strUrl the str url
-     * @throws HttpAccessException the http access exception
-     * @throws ParseException the parse exception
+     * @param nResponseStatus
+     *            The response status
+     * @param strMethodName
+     *            the str method name
+     * @param response
+     *            the response
+     * @param strUrl
+     *            the str url
+     * @throws HttpAccessException
+     *             the http access exception
+     * @throws ParseException
+     *             the parse exception
      */
-    private void validateResponseStatus( int nResponseStatus,String strMethodName, CloseableHttpResponse response, String strUrl ) throws HttpAccessException, ParseException
+    private void validateResponseStatus( int nResponseStatus, String strMethodName, CloseableHttpResponse response, String strUrl )
+            throws HttpAccessException, ParseException
     {
         if ( !_responseValidator.validate( nResponseStatus ) )
         {
-            String strError = "HttpAccess - Error executing method " + strMethodName + " at URL : " + stripPassword( strUrl ) + " - return code : " + nResponseStatus;
+            String strError = "HttpAccess - Error executing method " + strMethodName + " at URL : " + stripPassword( strUrl ) + " - return code : "
+                    + nResponseStatus;
             String strResponseBody;
             try
             {
-            	
-            	HttpEntity entity = response.getEntity();
+
+                HttpEntity entity = response.getEntity( );
                 // Get response information
-            	
-                strResponseBody = " Response Body : \n" + entity!=null?EntityUtils.toString(entity): " unable to get Response Body.";
+
+                strResponseBody = " Response Body : \n" + entity != null ? EntityUtils.toString( entity ) : " unable to get Response Body.";
 
             }
             catch( IOException ex )
@@ -1237,9 +1256,12 @@ public class HttpAccess
     /**
      * Throws a new HttpAccess exception.
      *
-     * @param strUrl            The URL concerned by the original exception
-     * @param exception            the original exception
-     * @throws HttpAccessException             The exception throwned
+     * @param strUrl
+     *            The URL concerned by the original exception
+     * @param exception
+     *            the original exception
+     * @throws HttpAccessException
+     *             The exception throwned
      */
     private void throwHttpAccessException( String strUrl, Exception exception ) throws HttpAccessException
     {
@@ -1251,102 +1273,117 @@ public class HttpAccess
     /**
      * Hide end of url if the keyword "password" appears in parameters.
      *
-     * @param strUrl the str url
+     * @param strUrl
+     *            the str url
      * @return the url stripped
      */
     private String stripPassword( String strUrl )
     {
         if ( strUrl != null && strUrl.indexOf( "?" ) > 0 && strUrl.toLowerCase( ).indexOf( "password", strUrl.indexOf( "?" ) ) > 0 )
         {
-            return strUrl.substring( 0, strUrl.toLowerCase( ).indexOf( "password", strUrl.indexOf( "?" ) ) ) + "***" ;
+            return strUrl.substring( 0, strUrl.toLowerCase( ).indexOf( "password", strUrl.indexOf( "?" ) ) ) + "***";
         }
         else
         {
             return strUrl;
         }
     }
-    
-    
-    
+
     /**
      * Add the security information in the request
      *
-     * @param httpRequest the http request
-     * @param strTargetUrl the target url of the request
-     * @param authenticator the authenticator
-     * @param listElements the list of elements used by sthe authenticator
+     * @param httpRequest
+     *            the http request
+     * @param strTargetUrl
+     *            the target url of the request
+     * @param authenticator
+     *            the authenticator
+     * @param listElements
+     *            the list of elements used by sthe authenticator
      */
-    private void addSecurityInformations(HttpUriRequestBase httpRequest,String strTargetUrl,RequestAuthenticator authenticator,List<String> listElements)
+    private void addSecurityInformations( HttpUriRequestBase httpRequest, String strTargetUrl, RequestAuthenticator authenticator, List<String> listElements )
     {
-    	
-    	if (authenticator != null) {
-			AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations(listElements);
-			// Add Security Parameters in the request
-			if (!securityInformations.getSecurityParameteres().isEmpty()) {
 
-				List<NameValuePair> nvps = new ArrayList<>();
+        if ( authenticator != null )
+        {
+            AuthenticateRequestInformations securityInformations = authenticator.getSecurityInformations( listElements );
+            // Add Security Parameters in the request
+            if ( !securityInformations.getSecurityParameteres( ).isEmpty( ) )
+            {
 
-				securityInformations.getSecurityParameteres().forEach((k, v) -> nvps.add(new BasicNameValuePair(k, v)));
-				// Add to the request URL
-				try {
-					URI uri = new URIBuilder(new URI(strTargetUrl)).addParameters(nvps).build();
-					httpRequest.setUri(uri);
-				} catch (URISyntaxException e) {
-					throw new RuntimeException(e);
-				}
+                List<NameValuePair> nvps = new ArrayList<>( );
 
-			}
-			// Add security  Headers in the request
-			if (!securityInformations.getSecurityHeaders().isEmpty()) {
+                securityInformations.getSecurityParameteres( ).forEach( ( k, v ) -> nvps.add( new BasicNameValuePair( k, v ) ) );
+                // Add to the request URL
+                try
+                {
+                    URI uri = new URIBuilder( new URI( strTargetUrl ) ).addParameters( nvps ).build( );
+                    httpRequest.setUri( uri );
+                }
+                catch( URISyntaxException e )
+                {
+                    throw new RuntimeException( e );
+                }
 
-				securityInformations.getSecurityHeaders().forEach((k, v) -> httpRequest.addHeader(k, v));
-			}
+            }
+            // Add security Headers in the request
+            if ( !securityInformations.getSecurityHeaders( ).isEmpty( ) )
+            {
 
-		}	
-    	
- 
+                securityInformations.getSecurityHeaders( ).forEach( ( k, v ) -> httpRequest.addHeader( k, v ) );
+            }
+
+        }
 
     }
-    
-    
+
     /**
      * Gets the response body.
      *
-     * @param httpRequest the http request
-     * @param strUrl the str url
-     * @param mapResponseHeader the map response header
+     * @param httpRequest
+     *            the http request
+     * @param strUrl
+     *            the str url
+     * @param mapResponseHeader
+     *            the map response header
      * @return the response body
-     * @throws HttpAccessException the http access exception
+     * @throws HttpAccessException
+     *             the http access exception
      */
-    private String getResponseBody( HttpUriRequestBase httpRequest,String strUrl,Map<String,String> mapResponseHeader ) throws HttpAccessException
+    private String getResponseBody( HttpUriRequestBase httpRequest, String strUrl, Map<String, String> mapResponseHeader ) throws HttpAccessException
     {
-    	String strResponseBody= StringUtils.EMPTY;
-		try {
-		    CloseableHttpClient httpClient = _accessService.getHttpClient( );
-			try (CloseableHttpResponse response = httpClient.execute(httpRequest)) {
+        String strResponseBody = StringUtils.EMPTY;
+        try
+        {
+            CloseableHttpClient httpClient = _accessService.getHttpClient( );
+            try ( CloseableHttpResponse response = httpClient.execute( httpRequest ) )
+            {
 
-				int nResponse = response.getCode();
-				validateResponseStatus(nResponse, httpRequest.getMethod(), response, strUrl);
+                int nResponse = response.getCode( );
+                validateResponseStatus( nResponse, httpRequest.getMethod( ), response, strUrl );
 
-				if (mapResponseHeader != null && response.getHeaders() != null) {
+                if ( mapResponseHeader != null && response.getHeaders( ) != null )
+                {
 
-					Arrays.asList(response.getHeaders()).stream()
-							.forEach(x -> mapResponseHeader.put(x.getName(), x.getValue()));
+                    Arrays.asList( response.getHeaders( ) ).stream( ).forEach( x -> mapResponseHeader.put( x.getName( ), x.getValue( ) ) );
 
-				}
-				HttpEntity entity = response.getEntity();
-				strResponseBody = EntityUtils.toString(entity,!StringUtils.isEmpty(   _accessService.getHttpClientConfiguration().getContentCharset())? Charset.forName(_accessService.getHttpClientConfiguration().getContentCharset()):Charset.forName(DEFAULT_CHARSET));
-				
-			}
+                }
+                HttpEntity entity = response.getEntity( );
+                strResponseBody = EntityUtils.toString( entity,
+                        !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                                ? Charset.forName( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                                : Charset.forName( DEFAULT_CHARSET ) );
 
-		}
+            }
 
-		catch (IOException | ParseException e) {
-			throwHttpAccessException(strUrl, e);
-		}	
-    	
-		return strResponseBody;
+        }
+
+        catch( IOException | ParseException e )
+        {
+            throwHttpAccessException( strUrl, e );
+        }
+
+        return strResponseBody;
     }
-    
-    
+
 }

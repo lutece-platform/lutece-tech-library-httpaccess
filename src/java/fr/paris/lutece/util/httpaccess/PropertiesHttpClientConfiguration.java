@@ -84,7 +84,7 @@ public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
 
     /** The Constant PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST. */
     private static final String PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST = "httpAccess.connectionPoolMaxConnectionsPerHost";
-    
+
     public PropertiesHttpClientConfiguration( )
     {
         this.setProxyHost( AppPropertiesService.getProperty( PROPERTY_PROXY_HOST ) );
