@@ -33,7 +33,6 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
@@ -58,13 +57,13 @@ public class HttpAccessService implements ResponseStatusValidator
     private static final HttpAccessService _singleton = new HttpAccessService( new PropertiesHttpClientConfiguration( ) );
 
     private final HttpClientConfiguration _httpClientConfiguration;
-    
-    private  final CloseableHttpClient _httpClient;
-   
-    
-    public HttpClientConfiguration getHttpClientConfiguration() {
-		return _httpClientConfiguration;
-	}
+
+    private final CloseableHttpClient _httpClient;
+
+    public HttpClientConfiguration getHttpClientConfiguration( )
+    {
+        return _httpClientConfiguration;
+    }
 
     private final ResponseStatusValidator _responseValidator;
 
@@ -77,16 +76,19 @@ public class HttpAccessService implements ResponseStatusValidator
     {
         return _singleton;
     }
+
     /**
-     * create new specific Instance of HttpAccessService 
-     * @param httpClientConfiguration the httpClienConfiguration
+     * create new specific Instance of HttpAccessService
+     * 
+     * @param httpClientConfiguration
+     *            the httpClienConfiguration
      */
-    public HttpAccessService(HttpClientConfiguration httpClientConfiguration)
+    public HttpAccessService( HttpClientConfiguration httpClientConfiguration )
     {
-    	super();
-    	_httpClientConfiguration = httpClientConfiguration;
-    	_responseValidator = SimpleResponseValidator.loadFromProperty( PROPERTY_HTTP_RESPONSES_CODE_AUTHORIZED, DEFAULT_RESPONSE_CODE_AUTHORIZED );
-    	_httpClient = buildHttpClient( );
+        super( );
+        _httpClientConfiguration = httpClientConfiguration;
+        _responseValidator = SimpleResponseValidator.loadFromProperty( PROPERTY_HTTP_RESPONSES_CODE_AUTHORIZED, DEFAULT_RESPONSE_CODE_AUTHORIZED );
+        _httpClient = buildHttpClient( );
     }
 
     /**
@@ -114,7 +116,7 @@ public class HttpAccessService implements ResponseStatusValidator
     private CloseableHttpClient buildHttpClient( )
     {
 
-			HttpClientBuilder clientBuilder = getHttpClientBuilder( );
+        HttpClientBuilder clientBuilder = getHttpClientBuilder( );
 
         if ( StringUtils.isNotBlank( _httpClientConfiguration.getProxyHost( ) ) )
         {
@@ -177,5 +179,4 @@ public class HttpAccessService implements ResponseStatusValidator
         return _responseValidator.validate( nStatus );
     }
 
-   
 }

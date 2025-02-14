@@ -62,9 +62,9 @@ public class CustomHttpAccessServiceTest
             _getHttpClientBuilderCalled = true;
             return super.getHttpClientBuilder( );
         }
-        
+
     }
-    
+
     @BeforeClass
     public static void initLutece( )
     {
