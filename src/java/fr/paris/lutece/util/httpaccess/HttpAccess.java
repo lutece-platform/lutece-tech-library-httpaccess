@@ -1228,29 +1228,24 @@ public class HttpAccess
     private void validateResponseStatus( int nResponseStatus, String strMethodName, CloseableHttpResponse response, String strUrl )
             throws HttpAccessException, ParseException
     {
-        if ( !_responseValidator.validate( nResponseStatus ) )
+        if ( _responseValidator.validate( nResponseStatus ) )
         {
-            String strError = "HttpAccess - Error executing method " + strMethodName + " at URL : " + stripPassword( strUrl ) + " - return code : "
-                    + nResponseStatus;
-            String strResponseBody;
-            try
-            {
-
-                HttpEntity entity = response.getEntity( );
-                // Get response information
-
-                strResponseBody = " Response Body : \n" + entity != null ? EntityUtils.toString( entity ) : " unable to get Response Body.";
-
-            }
-            catch( IOException ex )
-            {
-                strResponseBody = " unable to get Response Body.";
-            }
-            strError += strResponseBody;
-
-            throw new InvalidResponseStatus( strError, nResponseStatus, null );
+            return; // status OK
         }
-
+        String strError = "HttpAccess - Error executing method " + strMethodName + " at URL : " + stripPassword( strUrl ) + " - return code : "
+                + nResponseStatus;
+        String strResponseBody;
+        try
+        {
+            HttpEntity entity = response.getEntity( );
+            // Get response information
+            strResponseBody = entity != null ? EntityUtils.toString( entity ) : "<Response body unavailable>";
+        }
+        catch( IOException ex )
+        {
+            strResponseBody = "<unable to get Response Body : " + ex.getMessage( ) + ">";
+        }
+        throw new InvalidResponseStatus( strError, nResponseStatus, strResponseBody, null );
     }
 
     /**

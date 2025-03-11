@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -149,6 +150,32 @@ public class HttpAccessTest
     }
 
     @Test
+    public void testGetInvalidResponseBody( ) throws IOException, HttpAccessException
+    {
+        String strUrlTestHttp = mockWebServer.url( "/500" ).toString( );
+        HttpClientConfiguration configuration = new HttpClientConfiguration( );
+        configuration.setConnectionTimeout( 10000 );
+        configuration.setSocketTimeout( 10000 );
+
+        Map<String, String> mapHeaders = new HashMap<String, String>( );
+        Map<String, String> mapHeadersResponse = new HashMap<String, String>( );
+
+        HttpAccessService httpAccessService = new HttpAccessService( configuration );
+        HttpAccess httpAccess = new HttpAccess( httpAccessService, new MockResponseStatusValidator( ) );
+
+        try
+        {
+            httpAccess.doGet( strUrlTestHttp, null, null, mapHeaders, mapHeadersResponse );
+        }
+        catch( InvalidResponseStatus e )
+        {
+            assertEquals( 500, e.getResponseStatus( ) );
+            HttpRequestResult jsonRespone = _objectMapper.readValue( e.getResponseBody( ), HttpRequestResult.class );
+            assertEquals( "GET", jsonRespone.getMethodName( ) );
+        }
+    }
+
+    @Test
     public void testDoDelete( ) throws IOException, HttpAccessException
     {
 
@@ -207,7 +234,7 @@ public class HttpAccessTest
     public void testDoPut( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
     {
 
-        String strUrlTestHttp = mockWebServer.url( "/test/225" ).toString( );
+        String strUrlTestHttp = mockWebServer.url( "/test/225a" ).toString( );
 
         HttpClientConfiguration configuration = new HttpClientConfiguration( );
         configuration.setConnectionTimeout( 10000 );
@@ -492,8 +519,13 @@ public class HttpAccessTest
             @Override
             public MockResponse dispatch( RecordedRequest request )
             {
-                // wait(3000);
-                return new MockResponse( ).addHeader( "Content-Type", "application/json; charset=utf-8" ).setResponseCode( 200 )
+                int responseCode = 200;
+                List<String> pathSegments = request.getRequestUrl( ).pathSegments( );
+                if ( StringUtils.isNumeric( pathSegments.get( pathSegments.size( ) - 1 ) ) )
+                {
+                    responseCode = Integer.parseInt( pathSegments.get( pathSegments.size( ) - 1 ) );
+                }
+                return new MockResponse( ).addHeader( "Content-Type", "application/json; charset=utf-8" ).setResponseCode( responseCode )
                         .setBody( printRequest( request ) );
 
             }

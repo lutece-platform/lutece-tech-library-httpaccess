@@ -38,7 +38,9 @@ package fr.paris.lutece.util.httpaccess;
  */
 public class InvalidResponseStatus extends HttpAccessException
 {
-    private int _nResponseStatus;
+    private static final long serialVersionUID = 275350791204870316L;
+    private final int _nResponseStatus;
+    private final String _strResponseBody;
 
     /**
      * Constructor
@@ -47,13 +49,20 @@ public class InvalidResponseStatus extends HttpAccessException
      *            The message
      * @param nResponseStatus
      *            The response status
-     * @param e
-     *            The exception
+     * @param cause
+     *            The cause
      */
-    public InvalidResponseStatus( String strMessage, Integer nResponseStatus, Exception e )
+    public InvalidResponseStatus( String strMessage, Integer nResponseStatus, String strResponseBody, Exception cause )
     {
-        super( strMessage, nResponseStatus, e );
+        super( strMessage, nResponseStatus, cause );
         _nResponseStatus = nResponseStatus;
+        _strResponseBody = strResponseBody;
+    }
+
+    @Override
+    public String getMessage( )
+    {
+        return super.getMessage( ) + "\nResponse body :\n>>>\n" + _strResponseBody + "\n<<<";
     }
 
     /**
@@ -66,4 +75,14 @@ public class InvalidResponseStatus extends HttpAccessException
         return _nResponseStatus;
     }
 
+    /**
+     * Return the response body
+     * 
+     * @return the reponse body
+     * @since 3.0.3
+     */
+    public String getResponseBody( )
+    {
+        return _strResponseBody;
+    }
 }
