@@ -33,13 +33,12 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemHeaders;
 
-import java.io.File;
+import fr.paris.lutece.portal.service.upload.MultipartItem;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -47,7 +46,7 @@ import java.io.UnsupportedEncodingException;
  * MemoryFileItem
  *
  */
-public class MemoryFileItem implements FileItem
+public class MemoryFileItem implements MultipartItem
 {
     private static final long serialVersionUID = 922231338093963479L;
     private byte [ ] _data;
@@ -114,7 +113,7 @@ public class MemoryFileItem implements FileItem
      */
     public InputStream getInputStream( ) throws IOException
     {
-        throw new UnsupportedOperationException( );
+    	return new ByteArrayInputStream( _data );
     }
 
     /**
@@ -123,14 +122,6 @@ public class MemoryFileItem implements FileItem
     public String getName( )
     {
         return _strName;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public OutputStream getOutputStream( ) throws IOException
-    {
-        throw new UnsupportedOperationException( );
     }
 
     /**
@@ -187,23 +178,5 @@ public class MemoryFileItem implements FileItem
     public void setFormField( boolean state )
     {
         // Nothing
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void write( File file ) throws Exception
-    {
-        throw new UnsupportedOperationException( );
-    }
-
-    public FileItemHeaders getHeaders( )
-    {
-        throw new UnsupportedOperationException( );
-    }
-
-    public void setHeaders( FileItemHeaders headers )
-    {
-        throw new UnsupportedOperationException( );
     }
 }

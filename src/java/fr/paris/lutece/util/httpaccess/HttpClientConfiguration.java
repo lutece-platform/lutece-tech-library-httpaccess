@@ -103,7 +103,7 @@ public class HttpClientConfiguration
     }
 
     /**
-     * Gets the proxy port.// TODO: Auto-generated Javadoc
+     * Gets the proxy port.
      *
      * @return the proxy port
      */
@@ -151,7 +151,7 @@ public class HttpClientConfiguration
      */
     public String getProxyPassword( )
     {
-        return _strProxyPassword;// TODO: Auto-generated Javadoc
+        return _strProxyPassword;
     }
 
     /**

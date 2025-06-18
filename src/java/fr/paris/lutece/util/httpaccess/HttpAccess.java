@@ -50,7 +50,6 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -71,8 +70,10 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import fr.paris.lutece.portal.service.util.AppLogService;
+import fr.paris.lutece.portal.service.upload.MultipartItem;
 import fr.paris.lutece.util.signrequest.AuthenticateRequestInformations;
 import fr.paris.lutece.util.signrequest.RequestAuthenticator;
 
@@ -81,6 +82,8 @@ import fr.paris.lutece.util.signrequest.RequestAuthenticator;
  */
 public class HttpAccess
 {
+	private static Logger _logger = LogManager.getLogger( "lutece.application" );
+	
     // proxy authentication settings
 
     /** The Constant PATTERN_FILENAME. */
@@ -637,7 +640,7 @@ public class HttpAccess
      * @throws HttpAccessException
      *             if there is a problem to access to the given Url
      */
-    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, FileItem> fileItems ) throws HttpAccessException
+    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, MultipartItem> fileItems ) throws HttpAccessException
     {
         return doPostMultiPart( strUrl, params, fileItems, null, null );
     }
@@ -659,7 +662,7 @@ public class HttpAccess
      * @throws HttpAccessException
      *             if there is a problem to access to the given Url
      */
-    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, FileItem> fileItems, RequestAuthenticator authenticator,
+    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, MultipartItem> fileItems, RequestAuthenticator authenticator,
             List<String> listElements ) throws HttpAccessException
     {
         return doPostMultiPart( strUrl, params, fileItems, authenticator, listElements, null );
@@ -684,7 +687,7 @@ public class HttpAccess
      * @throws HttpAccessException
      *             if there is a problem to access to the given Url
      */
-    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, FileItem> fileItems, RequestAuthenticator authenticator,
+    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, MultipartItem> fileItems, RequestAuthenticator authenticator,
             List<String> listElements, Map<String, String> headersRequest ) throws HttpAccessException
     {
         return doPostMultiPart( strUrl, params, fileItems, authenticator, listElements, headersRequest, null );
@@ -711,7 +714,7 @@ public class HttpAccess
      * @throws HttpAccessException
      *             if there is a problem to access to the given Url
      */
-    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, FileItem> fileItems, RequestAuthenticator authenticator,
+    public String doPostMultiPart( String strUrl, Map<String, List<String>> params, Map<String, MultipartItem> fileItems, RequestAuthenticator authenticator,
             List<String> listElements, Map<String, String> headersRequest, Map<String, String> headersResponse ) throws HttpAccessException
     {
         String strResponseBody = StringUtils.EMPTY;
@@ -729,9 +732,9 @@ public class HttpAccess
         if ( ( fileItems != null ) && !fileItems.isEmpty( ) )
         {
             // Store the Files
-            for ( Entry<String, FileItem> paramFileItem : fileItems.entrySet( ) )
+            for ( Entry<String, MultipartItem> paramFileItem : fileItems.entrySet( ) )
             {
-                FileItem fileItem = paramFileItem.getValue( );
+            	MultipartItem fileItem = paramFileItem.getValue( );
 
                 if ( fileItem != null )
                 {
@@ -759,37 +762,17 @@ public class HttpAccess
                             }
                         }
 
-                        if ( fileItem.isInMemory( ) )
-                        {
+                        ContentType contentType = !StringUtils.isEmpty( strContentType )
+                                ? ContentType.create( strContentType,
+                                        !StringUtils.isEmpty( strCharset ) ? Charset.forName( strCharset ) : Charset.forName( DEFAULT_CHARSET ) )
+                                : ContentType.DEFAULT_BINARY;
 
-                            ContentType contentType = !StringUtils.isEmpty( strContentType )
-                                    ? ContentType.create( strContentType,
-                                            !StringUtils.isEmpty( strCharset ) ? Charset.forName( strCharset ) : Charset.forName( DEFAULT_CHARSET ) )
-                                    : ContentType.DEFAULT_BINARY;
-
-                            builder.addBinaryBody( paramFileItem.getKey( ), fileItem.get( ), contentType, fileItem.getName( ) );
-
-                        }
-                        else
-                        {
-                            File file = File.createTempFile( "httpaccess-multipart-", null );
-                            // Store files for deletion after the request completed
-                            listFiles.add( file );
-                            fileItem.write( file );
-                            ContentType contentType = !StringUtils.isEmpty( strContentType )
-                                    ? ContentType.create( strContentType,
-                                            !StringUtils.isEmpty( strCharset ) ? Charset.forName( strCharset ) : Charset.forName( DEFAULT_CHARSET ) )
-                                    : ContentType.DEFAULT_BINARY;
-
-                            builder.addBinaryBody( paramFileItem.getKey( ), file, contentType, fileItem.getName( ) );
-
-                        }
-
+                        builder.addBinaryBody( paramFileItem.getKey( ), fileItem.getInputStream( ), contentType, fileItem.getName( ) );
                     }
                     catch( Exception e )
                     {
                         String strError = "HttpAccess - Error writing file '" + fileItem.getName( ) + "' : ";
-                        AppLogService.error( strError + e.getMessage( ), e );
+                        _logger.error( strError + e.getMessage( ), e );
                         throw new HttpAccessException( strError + e.getMessage( ), e );
                     }
                 }
@@ -998,7 +981,7 @@ public class HttpAccess
             }
             catch( IOException e )
             {
-                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
+            	_logger.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
                 throw new HttpAccessException( e.getMessage( ), e );
             }
 
@@ -1055,7 +1038,7 @@ public class HttpAccess
             }
             catch( IOException e )
             {
-                AppLogService.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
+            	_logger.error( "HttpAccess - Error closing stream : " + e.getMessage( ), e );
                 throw new HttpAccessException( e.getMessage( ), e );
             }
 
@@ -1125,7 +1108,7 @@ public class HttpAccess
      * @throws HttpAccessException
      *             if there is a problem to access to the given Url
      */
-    public FileItem downloadFile( String strUrl ) throws HttpAccessException
+    public MultipartItem downloadFile( String strUrl ) throws HttpAccessException
     {
         MemoryFileItem fileItem = null;
         HttpGet httpGet = new HttpGet( strUrl );
@@ -1261,7 +1244,7 @@ public class HttpAccess
     private void throwHttpAccessException( String strUrl, Exception exception ) throws HttpAccessException
     {
         String strError = "HttpAccess - Error URL : " + stripPassword( strUrl ) + "' : ";
-        AppLogService.error( strError + exception.getMessage( ), exception );
+        _logger.error( strError + exception.getMessage( ), exception );
         throw new HttpAccessException( strError + exception.getMessage( ), exception );
     }
 
@@ -1372,7 +1355,6 @@ public class HttpAccess
             }
 
         }
-
         catch( IOException | ParseException e )
         {
             throwHttpAccessException( strUrl, e );

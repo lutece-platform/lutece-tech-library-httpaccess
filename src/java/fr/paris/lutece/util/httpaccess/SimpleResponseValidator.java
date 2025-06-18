@@ -33,7 +33,7 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * SimpleResponseValidator
@@ -67,7 +67,7 @@ public class SimpleResponseValidator implements ResponseStatusValidator
      */
     public static ResponseStatusValidator loadFromProperty( String strProperty, String strDefault )
     {
-        String strAuthorizedStatusList = AppPropertiesService.getProperty( strProperty, strDefault );
+        String strAuthorizedStatusList = ConfigProvider.getConfig( ).getOptionalValue( strProperty, String.class ).orElse( strDefault );
         return new SimpleResponseValidator( strAuthorizedStatusList );
     }
 

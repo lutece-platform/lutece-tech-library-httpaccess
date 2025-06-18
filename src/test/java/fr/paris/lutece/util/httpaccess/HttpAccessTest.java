@@ -46,20 +46,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import fr.paris.lutece.portal.service.util.AppPathService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import fr.paris.lutece.portal.service.upload.MultipartItem;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -73,15 +71,7 @@ public class HttpAccessTest
 
     private MockWebServer mockWebServer;
     private ObjectMapper _objectMapper = new ObjectMapper( );
-    private Logger _logger = Logger.getLogger( this.getClass( ) );
-
-    @BeforeClass
-    public static void initLutece( )
-    {
-        // fake initialization
-        AppPathService.init( "" );
-        AppPropertiesService.init( "" );
-    }
+    private Logger _logger = LogManager.getLogger( this.getClass( ) );
 
     @Test
     public void testDoGetProxy( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
@@ -295,7 +285,7 @@ public class HttpAccessTest
         MemoryFileItem meFileItem = new MemoryFileItem( strXml.getBytes( "UTF-8" ), "test_file.xml", strXml.getBytes( "UTF-8" ).length,
                 "text/xml; charset=UTF-8" );
 
-        Map<String, FileItem> mapFileItem = new HashMap( );
+        Map<String, MultipartItem> mapFileItem = new HashMap( );
 
         mapFileItem.put( "file_download_param_1", meFileItem );
 
@@ -474,7 +464,6 @@ public class HttpAccessTest
         // onfiguration.setProxyHost("");
         configuration.setNoProxyFor( "*.paris.mdp" );
         configuration.setProxyPort( "8080" );
-        configuration.setConnectionPoolEnabled( true );
         configuration.setConnectionPoolMaxTotalConnection( 3 );
         configuration.setConnectionPoolMaxConnectionPerHost( 3 );
 
@@ -495,21 +484,16 @@ public class HttpAccessTest
                 assertEquals( "GET", jsonRespone.getMethodName( ) );
                 _logger.debug( strTest );
             }
-            catch( HttpAccessException e )
+            catch( HttpAccessException | JsonProcessingException e )
             {
                 assertFalse( true );
             }
-
-            catch( JsonProcessingException e )
-            {
-                // TODO Auto-generated catch block
-                assertFalse( true );
-            }
+            
 
         } );
     }
 
-    @Before
+    @BeforeEach
     public void init( ) throws IOException
     {
         this.mockWebServer = new MockWebServer( );
@@ -532,12 +516,9 @@ public class HttpAccessTest
         } );
 
         this.mockWebServer.start( 18080 );
-
-        AppPathService.init( "./" );
-        AppPropertiesService.init( "./" );
     }
 
-    @After
+    @AfterEach
     public void stopServer( ) throws IOException
     {
 

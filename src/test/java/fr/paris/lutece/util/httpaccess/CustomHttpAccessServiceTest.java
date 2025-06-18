@@ -33,16 +33,12 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import fr.paris.lutece.portal.service.util.AppPathService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import org.junit.jupiter.api.Test;
 
 public class CustomHttpAccessServiceTest
 {
@@ -63,14 +59,6 @@ public class CustomHttpAccessServiceTest
             return super.getHttpClientBuilder( );
         }
 
-    }
-
-    @BeforeClass
-    public static void initLutece( )
-    {
-        // fake initialization
-        AppPathService.init( "" );
-        AppPropertiesService.init( "" );
     }
 
     @Test

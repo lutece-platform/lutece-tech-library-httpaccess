@@ -3,13 +3,13 @@
     <parent>
         <artifactId>lutece-global-pom</artifactId>
         <groupId>fr.paris.lutece.tools</groupId>
-        <version>6.1.0</version>
+        <version>8.0.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.paris.lutece.plugins</groupId>
     <artifactId>library-httpaccess</artifactId>
-    <version>3.0.3-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <name>Library HttpAccess</name>
     <packaging>jar</packaging>
     <description>Http client access library</description>
@@ -18,7 +18,7 @@
         <repository>
             <id>luteceSnapshot</id>
             <name>luteceSnapshot</name>
-            <url>http://dev.lutece.paris.fr/snapshot_repository</url>
+            <url>https://dev.lutece.paris.fr/snapshot_repository</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -26,7 +26,7 @@
         <repository>
             <id>lutece</id>
             <name>luteceRepository</name>
-            <url>http://dev.lutece.paris.fr/maven_repository</url>
+            <url>https://dev.lutece.paris.fr/maven_repository</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -35,37 +35,47 @@
 	
     <dependencies>
         <dependency>
-            <groupId>fr.paris.lutece</groupId>
-            <artifactId>lutece-core</artifactId>
-            <version>[7.0.0,)</version>
-            <type>lutece-core</type>
+            <groupId>fr.paris.lutece.plugins</groupId>
+            <artifactId>library-core-utils</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <type>jar</type>
         </dependency>
         <!-- signing request -->
         <dependency>
             <groupId>fr.paris.lutece.plugins</groupId>
             <artifactId>library-signrequest</artifactId>
-            <version>[3.0.0,)</version>
+            <version>[4.0.0-SNAPSHOT,)</version>
             <type>jar</type>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
             <version>5.4.1</version>
-	</dependency>
+		</dependency>
         <dependency>
 	    <groupId>com.squareup.okhttp3</groupId>
 	    <artifactId>mockwebserver</artifactId>
-	    <version>5.0.0-alpha.10</version>
+	    <version>5.0.0-alpha.16</version>
 	     <scope>test</scope>
-	 </dependency> 
+	 </dependency>
+        <dependency>
+            <groupId>fr.paris.lutece.plugins</groupId>
+		    <artifactId>library-lutece-unit-testing</artifactId>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+	    	<groupId>org.apache.logging.log4j</groupId>
+	    	<artifactId>log4j-slf4j-impl</artifactId>
+	    	<scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-        
     </dependencies>
-
-    <properties>
-        <jiraProjectName>HTTPACCESS</jiraProjectName>
-        <jiraComponentId>10158</jiraComponentId>
-    </properties>
 
     <scm>
         <connection>scm:git:https://github.com/lutece-platform/lutece-tech-library-httpaccess.git</connection>
