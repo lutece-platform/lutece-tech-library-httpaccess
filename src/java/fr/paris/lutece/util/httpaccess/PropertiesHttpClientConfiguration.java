@@ -34,15 +34,19 @@
 package fr.paris.lutece.util.httpaccess;
 
 import org.apache.commons.lang3.StringUtils;
-
-import fr.paris.lutece.portal.service.util.AppLogService;
-import fr.paris.lutece.portal.service.util.AppPropertiesService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * HttpClientConfiguration pulling the configuration from AppPropertiesService
  */
 public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
 {
+	private static Logger _logger = LogManager.getLogger( "lutece.application" );
+	private static Config _config= ConfigProvider.getConfig( );
+	
     /** The Constant PROPERTY_PROXY_HOST. */
     private static final String PROPERTY_PROXY_HOST = "httpAccess.proxyHost";
 
@@ -87,60 +91,60 @@ public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
 
     public PropertiesHttpClientConfiguration( )
     {
-        this.setProxyHost( AppPropertiesService.getProperty( PROPERTY_PROXY_HOST ) );
-        this.setProxyPort( AppPropertiesService.getProperty( PROPERTY_PROXY_PORT ) );
-        this.setProxyUserName( AppPropertiesService.getProperty( PROPERTY_PROXY_USERNAME ) );
-        this.setProxyPassword( AppPropertiesService.getProperty( PROPERTY_PROXY_PASSWORD ) );
-        this.setHostName( AppPropertiesService.getProperty( PROPERTY_HOST_NAME ) );
-        this.setDomainName( AppPropertiesService.getProperty( PROPERTY_DOMAIN_NAME ) );
-        this.setRealm( AppPropertiesService.getProperty( PROPERTY_REALM ) );
-        this.setNoProxyFor( AppPropertiesService.getProperty( PROPERTY_NO_PROXY_FOR ) );
-        this.setContentCharset( AppPropertiesService.getProperty( PROPERTY_CONTENT_CHARSET ) );
-        this.setElementCharset( AppPropertiesService.getProperty( PROPERTY_ELEMENT_CHARSET ) );
+    	this.setProxyHost( _config.getOptionalValue( PROPERTY_PROXY_HOST, String.class ).orElse( null ) );
+        this.setProxyPort( _config.getOptionalValue( PROPERTY_PROXY_PORT, String.class ).orElse( null ) );
+        this.setProxyUserName( _config.getOptionalValue( PROPERTY_PROXY_USERNAME, String.class ).orElse( null ) );
+        this.setProxyPassword( _config.getOptionalValue( PROPERTY_PROXY_PASSWORD, String.class ).orElse( null ) );
+        this.setHostName( _config.getOptionalValue( PROPERTY_HOST_NAME, String.class ).orElse( null ) );
+        this.setDomainName( _config.getOptionalValue( PROPERTY_DOMAIN_NAME, String.class ).orElse( null ) );
+        this.setRealm( _config.getOptionalValue( PROPERTY_REALM, String.class ).orElse( null ) );
+        this.setNoProxyFor( _config.getOptionalValue( PROPERTY_NO_PROXY_FOR, String.class ).orElse( null ) );
+        this.setContentCharset( _config.getOptionalValue( PROPERTY_CONTENT_CHARSET, String.class ).orElse( null ) );
+        this.setElementCharset( _config.getOptionalValue( PROPERTY_ELEMENT_CHARSET, String.class ).orElse( null ) );
 
         try
         {
-            this.setSocketTimeout( StringUtils.isNotEmpty( AppPropertiesService.getProperty( PROPERTY_SOCKET_TIMEOUT ) )
-                    ? Integer.parseInt( AppPropertiesService.getProperty( PROPERTY_SOCKET_TIMEOUT ) )
+            this.setSocketTimeout( StringUtils.isNotEmpty( _config.getOptionalValue( PROPERTY_SOCKET_TIMEOUT , String.class ).orElse( null )  )
+                    ? Integer.parseInt( _config.getOptionalValue( PROPERTY_SOCKET_TIMEOUT , String.class ).orElse( null ) )
                     : null );
         }
         catch( NumberFormatException e )
         {
-            AppLogService.error( "Error during initialisation of socket timeout ", e );
+        	_logger.error( "Error during initialisation of socket timeout ", e );
         }
 
         try
         {
-            this.setConnectionTimeout( StringUtils.isNotEmpty( AppPropertiesService.getProperty( PROPERTY_CONNECTION_TIMEOUT ) )
-                    ? Integer.parseInt( AppPropertiesService.getProperty( PROPERTY_CONNECTION_TIMEOUT ) )
+            this.setConnectionTimeout( StringUtils.isNotEmpty( _config.getOptionalValue( PROPERTY_CONNECTION_TIMEOUT , String.class ).orElse( null ) )
+                    ? Integer.parseInt( _config.getOptionalValue( PROPERTY_CONNECTION_TIMEOUT , String.class ).orElse( null ) )
                     : null );
 
         }
         catch( NumberFormatException e )
         {
-            AppLogService.error( "Error during initialisation of connection timeout ", e );
+        	_logger.error( "Error during initialisation of connection timeout ", e );
         }
         try
         {
             this.setConnectionPoolMaxTotalConnection(
-                    StringUtils.isNotEmpty( AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION ) )
-                            ? Integer.parseInt( AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION ) )
+                    StringUtils.isNotEmpty( _config.getOptionalValue( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION , String.class ).orElse( null ) )
+                            ? Integer.parseInt( _config.getOptionalValue( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION , String.class ).orElse( null ) )
                             : null );
         }
         catch( NumberFormatException e )
         {
-            AppLogService.error( "Error during initialisation of Connection Pool Maxt Total Connection ", e );
+        	_logger.error( "Error during initialisation of Connection Pool Maxt Total Connection ", e );
         }
         try
         {
             this.setConnectionPoolMaxConnectionPerHost(
-                    StringUtils.isNotEmpty( AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST ) )
-                            ? Integer.parseInt( AppPropertiesService.getProperty( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST ) )
+                    StringUtils.isNotEmpty( _config.getOptionalValue( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST , String.class ).orElse( null ) )
+                            ? Integer.parseInt( _config.getOptionalValue( PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST , String.class ).orElse( null ) )
                             : null );
         }
         catch( NumberFormatException e )
         {
-            AppLogService.error( "Error during initialisation of Connection Pool Maxt Total Connection Per Host ", e );
+        	_logger.error( "Error during initialisation of Connection Pool Maxt Total Connection Per Host ", e );
         }
     }
 }
