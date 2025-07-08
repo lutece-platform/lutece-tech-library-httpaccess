@@ -69,8 +69,15 @@ public class CustomHttpAccessServiceTest
     public static void initLutece( )
     {
         // fake initialization
-        AppPathService.init( "" );
-        AppPropertiesService.init( "" );
+        try
+        {
+            AppPathService.init( "" );
+            AppPropertiesService.init( "" );
+        }
+        catch ( Exception e )
+        {
+            // ignore
+        }
     }
 
     @Test
