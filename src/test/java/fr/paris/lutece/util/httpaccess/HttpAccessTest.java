@@ -38,7 +38,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,8 +78,15 @@ public class HttpAccessTest
     public static void initLutece( )
     {
         // fake initialization
-        AppPathService.init( "" );
-        AppPropertiesService.init( "" );
+        try
+        {
+            AppPathService.init( "" );
+            AppPropertiesService.init( "" );
+        }
+        catch ( Exception e )
+        {
+            // ignore
+        }
     }
 
     @Test
@@ -104,7 +110,7 @@ public class HttpAccessTest
     }
 
     @Test
-    public void testDoGetProxyNoProxy( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
+    public void testDoGetProxyNoProxy( ) throws HttpAccessException, IOException
     {
         String strUrlTestHttp = mockWebServer.url( "/test?param1=1&parma2=2" ).toString( );
         HttpClientConfiguration configuration = new HttpClientConfiguration( );
@@ -231,7 +237,7 @@ public class HttpAccessTest
     }
 
     @Test
-    public void testDoPut( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
+    public void testDoPut( ) throws HttpAccessException, IOException
     {
 
         String strUrlTestHttp = mockWebServer.url( "/test/225a" ).toString( );
@@ -261,7 +267,7 @@ public class HttpAccessTest
     }
 
     @Test
-    public void testDoPostMultipart( ) throws UnsupportedEncodingException, HttpAccessException, JsonMappingException, JsonProcessingException
+    public void testDoPostMultipart( ) throws HttpAccessException, IOException
     {
 
         String strUrlTestHttp = mockWebServer.url( "/test" ).toString( );
@@ -307,7 +313,7 @@ public class HttpAccessTest
     }
 
     @Test
-    public void testDoPostJson( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
+    public void testDoPostJson( ) throws HttpAccessException, IOException
     {
         String strJson = "{\n" + "  \"identity_change\" : {\n" + "    \"identity\" : {\n" + "    \"customer_id\" : \"b59f9424-6c5f-4bc7-a12545\",\n"
                 + "    \"attributes\" : {\n" + "      \"birthcountry\" : {\n" + "        \"key\" : \"birthcountry\",\n" + "        \"type\" : \"string\",\n"
@@ -505,6 +511,11 @@ public class HttpAccessTest
                 // TODO Auto-generated catch block
                 assertFalse( true );
             }
+            catch( IOException e )
+            {
+                // TODO Auto-generated catch block
+                assertFalse( true );
+            }
 
         } );
     }
@@ -533,8 +544,15 @@ public class HttpAccessTest
 
         this.mockWebServer.start( 18080 );
 
-        AppPathService.init( "./" );
-        AppPropertiesService.init( "./" );
+        try
+        {
+            AppPathService.init( "" );
+            AppPropertiesService.init( "" );
+        }
+        catch ( Exception e )
+        {
+            // ignore
+        }
     }
 
     @After
