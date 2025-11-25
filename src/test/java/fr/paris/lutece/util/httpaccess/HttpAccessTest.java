@@ -468,6 +468,31 @@ public class HttpAccessTest
     }
 
     @Test
+    public void testEmptyContent( ) throws HttpAccessException, JsonMappingException, JsonProcessingException
+    {
+        String strUrlTestHttp = mockWebServer.url( "/204" ).toString( );
+        HttpClientConfiguration configuration = new HttpClientConfiguration( );
+        configuration.setConnectionTimeout( 10000 );
+        configuration.setSocketTimeout( 10000 );
+
+        Map<String, String> mapHeaders = new HashMap<String, String>( );
+        Map<String, String> mapHeadersResponse = new HashMap<String, String>( );
+
+        HttpAccessService httpAccessService = new HttpAccessService( configuration );
+        HttpAccess httpAccess = new HttpAccess( httpAccessService, new MockResponseStatusValidator( ) );
+
+        try
+        {
+            httpAccess.doGet( strUrlTestHttp, null, null, mapHeaders, mapHeadersResponse );
+        }
+        catch( InvalidResponseStatus e )
+        {
+            assertEquals( 204, e.getResponseStatus( ) );
+            assertEquals( "", e.getResponseBody( ) );
+        }
+    }
+
+    @Test
     public void testConnectionPool( )
     {
 
@@ -532,12 +557,17 @@ public class HttpAccessTest
             {
                 int responseCode = 200;
                 List<String> pathSegments = request.getRequestUrl( ).pathSegments( );
+                String responseBody = printRequest( request );
                 if ( StringUtils.isNumeric( pathSegments.get( pathSegments.size( ) - 1 ) ) )
                 {
                     responseCode = Integer.parseInt( pathSegments.get( pathSegments.size( ) - 1 ) );
+                    if ( responseCode == 204 )
+                    {
+                        responseBody = "";
+                    }
                 }
                 return new MockResponse( ).addHeader( "Content-Type", "application/json; charset=utf-8" ).setResponseCode( responseCode )
-                        .setBody( printRequest( request ) );
+                        .setBody( responseBody );
 
             }
         } );
