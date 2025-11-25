@@ -1347,10 +1347,13 @@ public class HttpAccess
 
                 }
                 HttpEntity entity = response.getEntity( );
-                strResponseBody = EntityUtils.toString( entity,
-                        !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
-                                ? Charset.forName( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
-                                : Charset.forName( DEFAULT_CHARSET ) );
+                if ( entity != null )
+                {
+                    strResponseBody = EntityUtils.toString( entity,
+                            !StringUtils.isEmpty( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                                    ? Charset.forName( _accessService.getHttpClientConfiguration( ).getContentCharset( ) )
+                                    : Charset.forName( DEFAULT_CHARSET ) );
+                }
 
             }
 
