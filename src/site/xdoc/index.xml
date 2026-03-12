@@ -16,10 +16,9 @@
                 </p>
             </subsection>
             <subsection name="Configuration">
-                <p>
-                    Configuration is defined in the <code>WEB-INF/conf/plugins/httpaccess.properties</code>.
-                    <pre>
-################################################################
+                <p>Configuration is defined in the <code>WEB-INF/conf/plugins/httpaccess.properties</code>.</p>
+
+<pre>################################################################
 ## Proxy settings
 httpAccess.proxyHost=
 httpAccess.proxyPort=
@@ -41,8 +40,22 @@ httpAccess.connexionTimeout=
 httpAccess.socketTimeout=
 #Http responses code authorized (200->OK,201 ->Created,...)
 httpAccess.responsesCodeAuthorized=200,201,202,203,204,205,206,207,210
-                    </pre>
-                </p>
+
+# Connection pool configuration
+
+# Maximum total number of connections in the pool; optional
+#httpAccess.connectionPoolMaxTotalConnections=
+# Maximum number of connections per host in the pool; optional
+#httpAccess.connectionPoolMaxConnectionsPerHost
+# Time to live of a connection in the pool; default 5
+#httpAccess.connectionTimeToLive
+# Unit of the timeToLive parameter as a java TimeUnit constant; default MINUTES
+#httpAccess.connectionTimeToLive.unit
+# Connection idle timeout; default 1
+#httpAccess.connectionIdleTimeout
+# Unit of idleTimeout parameter as a java TimeUnit constant; default MINUTES
+#httpAccess.connectionIdleTimeout.unit</pre>
+
             </subsection>
         </section>
     </body>

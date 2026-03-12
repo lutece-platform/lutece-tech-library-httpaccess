@@ -33,6 +33,8 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * The Class HttpClientConfiguration.
  */
@@ -80,6 +82,18 @@ public class HttpClientConfiguration
 
     /** The _str connection pool max connection per host. */
     private Integer _nConnectionPoolMaxConnectionPerHost;
+
+    /** The connection time to live in the pool */
+    private Long _nConnectionTimeToLive;
+
+    /** The unit of the _nConnectionTimeToLive field */
+    private TimeUnit _connectionTimeToLiveUnit;
+
+    /** The connection idle timeout in the pool */
+    private Long _nConnectionIdleTimeout;
+
+    /** the unit of the _nConnectionIdleTimeout field */
+    private TimeUnit _connectionIdleTimeoutUnit;
 
     /**
      * Gets the proxy host.
@@ -398,4 +412,95 @@ public class HttpClientConfiguration
         this._nConnectionPoolMaxConnectionPerHost = nConnectionPoolMaxConnectionPerHost;
     }
 
+    /**
+     * Gets the connection time to live in the pool. The unit of this value is available via {@link #getConnectionTimeToLiveUnit}.
+     * 
+     * @return the connection time to live in the pool
+     * @since 3.0.5
+     */
+    public Long getConnectionTimeToLive( )
+    {
+        return _nConnectionTimeToLive;
+    }
+
+    /**
+     * Sets the connection time to live in the pool. The unit of this value is settable via {@link #setConnectionTimeToLiveUnit}.
+     * 
+     * @param nConnectionTimeToLive
+     *            connection time to live in the pool
+     * @since 3.0.5
+     */
+    public void setConnectionTimeToLive( Long nConnectionTimeToLive )
+    {
+        this._nConnectionTimeToLive = nConnectionTimeToLive;
+    }
+
+    /**
+     * Gets the connection time to live unit
+     * 
+     * @return the connection time to live unit
+     * @since 3.0.5
+     */
+    public TimeUnit getConnectionTimeToLiveUnit( )
+    {
+        return _connectionTimeToLiveUnit;
+    }
+
+    /**
+     * Sets the connection time to live unit
+     * 
+     * @param connectionTimeToLiveUnit
+     *            the connection time to live unit
+     * @since 3.0.5
+     */
+    public void setConnectionTimeToLiveUnit( TimeUnit connectionTimeToLiveUnit )
+    {
+        this._connectionTimeToLiveUnit = connectionTimeToLiveUnit;
+    }
+
+    /**
+     * Gets the connection idle timeout in the pool. The unit of this value is available via {@link #getConnectionIdleTimeoutUnit}.
+     * 
+     * @return the connection idle timeout in the pool
+     * @since 3.0.5
+     */
+    public Long getConnectionIdleTimeout( )
+    {
+        return _nConnectionIdleTimeout;
+    }
+
+    /**
+     * Sets the connection idle timeout in the pool. The unit of this value is settable via {@link #setConnectionIdleTimeoutUnit}.
+     * 
+     * @param nConnectionIdleTimeout
+     *            connection idle timeout in the pool
+     * @since 3.0.5
+     */
+    public void setConnectionIdleTimeout( Long nConnectionIdleTimeout )
+    {
+        this._nConnectionIdleTimeout = nConnectionIdleTimeout;
+    }
+
+    /**
+     * Gets the connection idle timeout unit
+     * 
+     * @return the connection idle timeout unit
+     * @since 3.0.5
+     */
+    public TimeUnit getConnectionIdleTimeoutUnit( )
+    {
+        return _connectionIdleTimeoutUnit;
+    }
+
+    /**
+     * Sets the connection idle timeout unit
+     * 
+     * @param connectionTimeToLiveUnit
+     *            the connection idle timeout unit
+     * @since 3.0.5
+     */
+    public void setConnectionIdleTimeoutUnit( TimeUnit connectionIdleTimeoutUnit )
+    {
+        this._connectionIdleTimeoutUnit = connectionIdleTimeoutUnit;
+    }
 }

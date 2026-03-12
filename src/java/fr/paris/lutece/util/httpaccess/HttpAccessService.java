@@ -34,12 +34,14 @@
 package fr.paris.lutece.util.httpaccess;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.ConnectionConfig.Builder;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.core5.util.Timeout;
 
 /**
@@ -124,24 +126,36 @@ public class HttpAccessService implements ResponseStatusValidator
                     Integer.parseInt( _httpClientConfiguration.getProxyPort( ) ), _httpClientConfiguration.getNoProxyFor( ) ) );
         }
 
-        if ( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost( ) != null
-                || _httpClientConfiguration.getConnectionPoolMaxTotalConnection( ) != null )
+        PoolingHttpClientConnectionManagerBuilder  connectionManagerbuilder = PoolingHttpClientConnectionManagerBuilder.create( );
+
+        if ( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost( ) != null )
         {
-            PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager( );
-
-            if ( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost( ) != null )
-            {
-                connectionManager.setDefaultMaxPerRoute( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost( ) );
-
-            }
-
-            if ( _httpClientConfiguration.getConnectionPoolMaxTotalConnection( ) != null )
-            {
-                connectionManager.setMaxTotal( _httpClientConfiguration.getConnectionPoolMaxTotalConnection( ) );
-            }
-
-            clientBuilder.setConnectionManager( connectionManager );
+            connectionManagerbuilder.setMaxConnPerRoute( _httpClientConfiguration.getConnectionPoolMaxConnectionPerHost( ) );
         }
+
+        if ( _httpClientConfiguration.getConnectionPoolMaxTotalConnection( ) != null )
+        {
+            connectionManagerbuilder.setMaxConnTotal( _httpClientConfiguration.getConnectionPoolMaxTotalConnection( ) );
+        }
+
+        if ( _httpClientConfiguration.getConnectionTimeToLive( ) != null || _httpClientConfiguration.getConnectionIdleTimeout( ) != null )
+        {
+            Builder connectionConfigBuilder = ConnectionConfig.custom( );
+
+            if ( _httpClientConfiguration.getConnectionTimeToLive( ) != null )
+            {
+                connectionConfigBuilder.setTimeToLive( _httpClientConfiguration.getConnectionTimeToLive( ),
+                        _httpClientConfiguration.getConnectionTimeToLiveUnit( ) );
+            }
+            if ( _httpClientConfiguration.getConnectionIdleTimeout( ) != null )
+            {
+                connectionConfigBuilder.setIdleTimeout( _httpClientConfiguration.getConnectionIdleTimeout( ),
+                        _httpClientConfiguration.getConnectionIdleTimeoutUnit( ) );
+            }
+            connectionManagerbuilder.setDefaultConnectionConfig( connectionConfigBuilder.build( ) );
+        }
+
+        clientBuilder.setConnectionManager( connectionManagerbuilder.build( ) );
 
         if ( _httpClientConfiguration.getSocketTimeout( ) != null || _httpClientConfiguration.getConnectionTimeout( ) != null )
         {
