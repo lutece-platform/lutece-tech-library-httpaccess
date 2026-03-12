@@ -33,6 +33,8 @@
  */
 package fr.paris.lutece.util.httpaccess;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.lang3.StringUtils;
 
 import fr.paris.lutece.portal.service.util.AppLogService;
@@ -85,6 +87,18 @@ public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
     /** The Constant PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST. */
     private static final String PROPERTY_CONNECTION_POOL_MAX_TOTAL_CONNECTION_PER_HOST = "httpAccess.connectionPoolMaxConnectionsPerHost";
 
+    /** The Constant PROPERTY_CONNECTION_TIME_TO_LIVE */
+    private static final String PROPERTY_CONNECTION_TIME_TO_LIVE = "httpAccess.connectionTimeToLive";
+
+    /** The Constant PROPERTY_CONNECTION_TIME_TO_LIVE_UNIT */
+    private static final String PROPERTY_CONNECTION_TIME_TO_LIVE_UNIT = "httpAccess.connectionTimeToLive.unit";
+
+    /** The Constant PROPERTY_CONNECTION_IDLE_TIMEOUT */
+    private static final String PROPERTY_CONNECTION_IDLE_TIMEOUT = "httpAccess.connectionIdleTimeout";
+
+    /** The Constant PROPERTY_CONNECTION_IDLE_TIMEOUT_UNIT */
+    private static final String PROPERTY_CONNECTION_IDLE_TIMEOUT_UNIT = "httpAccess.connectionIdleTimeout.unit";
+
     public PropertiesHttpClientConfiguration( )
     {
         this.setProxyHost( AppPropertiesService.getProperty( PROPERTY_PROXY_HOST ) );
@@ -129,7 +143,7 @@ public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
         }
         catch( NumberFormatException e )
         {
-            AppLogService.error( "Error during initialisation of Connection Pool Maxt Total Connection ", e );
+            AppLogService.error( "Error during initialisation of Connection Pool Max Total Connection ", e );
         }
         try
         {
@@ -141,6 +155,28 @@ public class PropertiesHttpClientConfiguration extends HttpClientConfiguration
         catch( NumberFormatException e )
         {
             AppLogService.error( "Error during initialisation of Connection Pool Maxt Total Connection Per Host ", e );
+        }
+        this.setConnectionIdleTimeout( AppPropertiesService.getPropertyLong( PROPERTY_CONNECTION_IDLE_TIMEOUT, 1 ) );
+        try
+        {
+            this.setConnectionIdleTimeoutUnit(
+                    TimeUnit.valueOf( AppPropertiesService.getProperty( PROPERTY_CONNECTION_IDLE_TIMEOUT_UNIT, "MINUTES" ).trim( ) ) );
+        }
+        catch( IllegalArgumentException e )
+        {
+            AppLogService.error( "Error during initialisation of Connection Pool idle timeout unit", e );
+            this.setConnectionIdleTimeout( null );
+        }
+        this.setConnectionTimeToLive( AppPropertiesService.getPropertyLong( PROPERTY_CONNECTION_TIME_TO_LIVE, 5 ) );
+        try
+        {
+            this.setConnectionTimeToLiveUnit(
+                    TimeUnit.valueOf( AppPropertiesService.getProperty( PROPERTY_CONNECTION_TIME_TO_LIVE_UNIT, "MINUTES" ).trim( ) ) );
+        }
+        catch( IllegalArgumentException e )
+        {
+            AppLogService.error( "Error during initialisation of Connection Pool time to live unit", e );
+            this.setConnectionTimeToLive( null );
         }
     }
 }

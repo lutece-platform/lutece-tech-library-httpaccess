@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.lang3.StringUtils;
@@ -502,12 +503,15 @@ public class HttpAccessTest
         HttpClientConfiguration configuration = new HttpClientConfiguration( );
         configuration.setConnectionTimeout( 10000 );
         configuration.setSocketTimeout( 100000 );
-        // onfiguration.setProxyHost("");
+        // configuration.setProxyHost("");
         configuration.setNoProxyFor( "*.paris.mdp" );
         configuration.setProxyPort( "8080" );
-        configuration.setConnectionPoolEnabled( true );
         configuration.setConnectionPoolMaxTotalConnection( 3 );
         configuration.setConnectionPoolMaxConnectionPerHost( 3 );
+        configuration.setConnectionIdleTimeout( 5L );
+        configuration.setConnectionIdleTimeoutUnit( TimeUnit.valueOf( "SECONDS" ) );
+        configuration.setConnectionTimeToLive( 10L );
+        configuration.setConnectionTimeToLiveUnit( TimeUnit.valueOf( "SECONDS" ) );
 
         Map<String, String> mapHeaders = new HashMap<String, String>( );
         Map<String, String> mapHeadersResponse = new HashMap<String, String>( );

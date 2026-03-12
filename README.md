@@ -1,17 +1,21 @@
+![](https://dev.lutece.paris.fr/jenkins/buildStatus/icon?job=tech-library-httpaccess-deploy)
+[![Alerte](https://dev.lutece.paris.fr/sonar/api/project_badges/measure?project=fr.paris.lutece.plugins%3Alibrary-httpaccess&metric=alert_status)](https://dev.lutece.paris.fr/sonar/dashboard?id=fr.paris.lutece.plugins%3Alibrary-httpaccess)
+[![Line of code](https://dev.lutece.paris.fr/sonar/api/project_badges/measure?project=fr.paris.lutece.plugins%3Alibrary-httpaccess&metric=ncloc)](https://dev.lutece.paris.fr/sonar/dashboard?id=fr.paris.lutece.plugins%3Alibrary-httpaccess)
+[![Coverage](https://dev.lutece.paris.fr/sonar/api/project_badges/measure?project=fr.paris.lutece.plugins%3Alibrary-httpaccess&metric=coverage)](https://dev.lutece.paris.fr/sonar/dashboard?id=fr.paris.lutece.plugins%3Alibrary-httpaccess)
 
-#Library HttpAccess
+# Library HttpAccess
 
-##Introduction
+## Introduction
 
 This library provides simplified methods to perform HTTP requests (GET, POST, ...) and to pass through proxies notably based on NTLM authentications.
 
 Plugins should be based primarily on the library so to pool configuration.
 
-##Configuration
+## Configuration
 
 Configuration is defined in the `WEB-INF/conf/plugins/httpaccess.properties` .
-```
 
+```
 ################################################################
 ## Proxy settings
 httpAccess.proxyHost=
@@ -34,12 +38,25 @@ httpAccess.connexionTimeout=
 httpAccess.socketTimeout=
 #Http responses code authorized (200->OK,201 ->Created,...)
 httpAccess.responsesCodeAuthorized=200,201,202,203,204,205,206,207,210
-                    
+
+# Connection pool configuration
+
+# Maximum total number of connections in the pool; optional
+#httpAccess.connectionPoolMaxTotalConnections=
+# Maximum number of connections per host in the pool; optional
+#httpAccess.connectionPoolMaxConnectionsPerHost
+# Time to live of a connection in the pool; default 5
+#httpAccess.connectionTimeToLive
+# Unit of the timeToLive parameter as a java TimeUnit constant; default MINUTES
+#httpAccess.connectionTimeToLive.unit
+# Connection idle timeout; default 1
+#httpAccess.connectionIdleTimeout
+# Unit of idleTimeout parameter as a java TimeUnit constant; default MINUTES
+#httpAccess.connectionIdleTimeout.unit
 ```
 
 
-
-[Maven documentation and reports](http://dev.lutece.paris.fr/plugins/library-httpaccess/)
+[Maven documentation and reports](https://dev.lutece.paris.fr/plugins/library-httpaccess/)
 
 
 
