@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>fr.paris.lutece.plugins</groupId>
     <artifactId>library-httpaccess</artifactId>
-    <version>4.0.1-beta-01</version>
+    <version>4.0.1</version>
     <name>Library HttpAccess</name>
     <packaging>jar</packaging>
     <description>Http client access library</description>
